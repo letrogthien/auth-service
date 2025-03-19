@@ -1,0 +1,9 @@
+{
+  "type": "record",
+  "name": "RegisterEvModel",
+  "namespace": "com.gin.wegd.common.events",
+  "fields": [
+    {"name": "email", "type": "string"},
+    {"name": "userName", "type": "string"}
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "type": "record",
+  "name": "OtpEvModel",
+  "namespace": "com.gin.wegd.common.events",
+  "fields": [
+    {"name": "email", "type": "string"},
+    {"name": "userName", "type": "string"},
+    {"name": "otp", "type": "string"}
+  ]
+}
