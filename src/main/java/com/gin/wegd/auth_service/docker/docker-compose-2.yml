@@ -10,6 +10,7 @@ services:
 
   kafka1:
     image: bitnami/kafka:latest
+    user: root
     depends_on:
       - zookeeper
     environment:

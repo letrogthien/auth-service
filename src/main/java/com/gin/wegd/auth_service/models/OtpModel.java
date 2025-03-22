@@ -13,10 +13,11 @@ import java.util.UUID;
 @Builder
 public class OtpModel {
     @Id
-    @Column(name = "id", length = 36)
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(name = "id")
     private UUID id;
 
-    @Column(name = "user_id", length = 36)
+    @Column(name = "user_id")
     private UUID userId;
 
     @Column(name = "username")

@@ -17,6 +17,7 @@ import java.util.UUID;
 @NoArgsConstructor
 public class Error {
     @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(name = "id", length = 36)
     private UUID id;
 

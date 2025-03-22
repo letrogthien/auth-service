@@ -31,6 +31,8 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.UUID;
+
 
 @RequiredArgsConstructor
 @Service
@@ -61,8 +63,9 @@ public class UserCenterServiceImpl implements UserCenterService {
     }
 
     @Override
+    @Transactional
     public ApiResponse<String> changePassword(ChangePasswordRq changePasswordRq) {
-        String userId = this.extractUserIdInContext();
+        UUID userId = this.extractUserIdInContext();
 
         User u = userService.getUserById(userId);
 
@@ -83,7 +86,7 @@ public class UserCenterServiceImpl implements UserCenterService {
     @Transactional
     @Override
     public ApiResponse<String> deleteAccount(String otp) {
-        String userId = this.extractUserIdInContext();
+        UUID userId = this.extractUserIdInContext();
         User u = userService.getUserById(userId);
         if (u.getStatus() == UserStatus.BANNED || u.getStatus() == UserStatus.INACTIVE) {
             throw new CustomException(ErrorCode.BLOCK_REQUEST);
@@ -103,7 +106,7 @@ public class UserCenterServiceImpl implements UserCenterService {
     @Override
     @Transactional
     public ApiResponse<String> verifyPhoneNumber(String otp) {
-        String userId = this.extractUserIdInContext();
+        UUID userId = this.extractUserIdInContext();
         User u = userService.getUserById(userId);
         if (u.getPhone().isActive()) {
             throw new CustomException(ErrorCode.BLOCK_REQUEST);
@@ -121,7 +124,7 @@ public class UserCenterServiceImpl implements UserCenterService {
     @Override
     @Transactional
     public ApiResponse<String> changePhoneNumber(ChangePhoneNumberRq changePhoneNumberRq) {
-        String userId = this.extractUserIdInContext();
+        UUID userId = this.extractUserIdInContext();
         User u = userService.getUserById(userId);
 
         UserPhone userPhone = u.getPhone();
@@ -142,7 +145,7 @@ public class UserCenterServiceImpl implements UserCenterService {
 
     @Override
     public ApiResponse<String> updateProfile(UpdateUserRq updateUserRq) {
-        String userId = this.extractUserIdInContext();
+        UUID userId = this.extractUserIdInContext();
         User u = userService.getUserById(userId);
         u = userMapper.updateUserRqToUser(updateUserRq, u);
         userService.saveUser(u);
@@ -153,7 +156,7 @@ public class UserCenterServiceImpl implements UserCenterService {
 
     @Override
     public ApiResponse<String> enable2fa() {
-        String userId = this.extractUserIdInContext();
+        UUID userId = this.extractUserIdInContext();
         User u = userService.getUserById(userId);
         u.setTwoFactorAuthEnabled(true);
         userService.saveUser(u);
@@ -164,7 +167,7 @@ public class UserCenterServiceImpl implements UserCenterService {
 
     @Override
     public ApiResponse<String> disable2fa(String otp) {
-        String userId = this.extractUserIdInContext();
+        UUID userId = this.extractUserIdInContext();
         User u = userService.getUserById(userId);
         u.setTwoFactorAuthEnabled(false);
         otpService.getOtpValid(userId, otp, OtpPurpose.TWO_FACTOR_AUTHENTICATION);
@@ -184,7 +187,7 @@ public class UserCenterServiceImpl implements UserCenterService {
         if (userIdDocument.getStatus() != UserIdDocStatus.VERIFIED) {
             throw new CustomException(ErrorCode.BLOCK_REQUEST);
         }
-        u.getRole().add(Role.MIDDLE_MAN);
+        u.getRole().add(Role.MIDDLE_MAN); //wait for admin to approve
         userService.saveUser(u);
         return ApiResponse.<String>builder()
                 .message("register middle")
@@ -197,7 +200,7 @@ public class UserCenterServiceImpl implements UserCenterService {
     }
 
 
-    private String extractUserIdInContext() {
+    private UUID extractUserIdInContext() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication == null) {
@@ -205,7 +208,7 @@ public class UserCenterServiceImpl implements UserCenterService {
         }
 
         Jwt jwt = (Jwt) authentication.getPrincipal();
-        return jwt.getClaim("id");
+        return UUID.fromString(jwt.getClaim("id"));
     }
 
 

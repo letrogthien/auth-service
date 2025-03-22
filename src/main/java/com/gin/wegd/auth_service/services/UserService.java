@@ -5,16 +5,17 @@ import com.gin.wegd.auth_service.models.User;
 
 
 import java.util.List;
+import java.util.UUID;
 
 public interface UserService {
     User getUserByEmail(final String email);
     User createUser(final User user);
-    void deleteUser(final String userId);
-    User getUserById(final String id);
+    void deleteUser(final UUID userId);
+    User getUserById(final UUID id);
     User getUserByUsername(final String username);
     List<User> getAllUsers();
     void saveUser(final User user);
     boolean exitsByEmail(String email);
     boolean exitsByUserName(String userName);
-    void banUser(String userId);
+    void banUser(UUID userId);
 }

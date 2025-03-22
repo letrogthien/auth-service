@@ -1,5 +1,7 @@
 package com.gin.wegd.auth_service.services;
 
+import java.util.UUID;
+
 public interface AdminService {
-    void banUserById(String userId);
+    void banUserById(UUID userId);
 }

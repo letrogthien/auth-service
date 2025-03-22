@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 
 @Service
@@ -36,7 +37,7 @@ public class UserServiceImpl implements UserService {
 
 
     @Override
-    public void deleteUser(String userId) {
+    public void deleteUser(UUID userId) {
         User user = userRepository.findById(userId).orElseThrow(
                 () -> new CustomException(ErrorCode.USER_NOT_EXISTED)
         );
@@ -44,7 +45,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User getUserById(String id) {
+    public User getUserById(UUID id) {
         return userRepository.findById(id)
                 .orElseThrow(()->
                         new CustomException(ErrorCode.USER_NOT_EXISTED));
@@ -78,7 +79,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void banUser(String userId) {
+    public void banUser(UUID userId) {
         User u= userRepository.findById(userId)
                 .orElseThrow(()-> new CustomException(ErrorCode.USER_NOT_EXISTED));
         u.setStatus(UserStatus.BANNED);

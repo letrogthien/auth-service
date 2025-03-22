@@ -9,10 +9,11 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 
 @Repository
-public interface OtpRepository extends JpaRepository<OtpModel, String> {
+public interface OtpRepository extends JpaRepository<OtpModel, UUID> {
 
     Optional<OtpModel> findByOtp(String otp);
 
@@ -25,8 +26,6 @@ public interface OtpRepository extends JpaRepository<OtpModel, String> {
             AND o.active = true
             AND o.expiredAt > ?4
             """)
-    Optional<OtpModel> findValidOtp(String userId, String otp, OtpPurpose otpPurpose, LocalDateTime now);
-
-    List<OtpModel> findAllByUserIdAndActiveAndOtpPurpose(String userId, boolean active, OtpPurpose otpPurpose);
+    Optional<OtpModel> findValidOtp(UUID userId, String otp, OtpPurpose otpPurpose, LocalDateTime now);
 
 }

@@ -2,6 +2,8 @@ package com.gin.wegd.auth_service.redis;
 
 
 import com.gin.wegd.auth_service.comon.TokenStatus;
+import com.gin.wegd.auth_service.exception.CustomException;
+import com.gin.wegd.auth_service.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -22,7 +24,7 @@ public class RedisUtils {
         stringRedisTemplate.opsForValue().set(key, value);
         stringRedisTemplate.expire(key, refreshTokenExpiration, TimeUnit.MILLISECONDS);
     }
-    public boolean refreshTokenInactive(String key) {
+    public boolean refreshTokenIsInactive(String key) {
         String status = stringRedisTemplate.opsForValue().get(key);
         return status != null && status.equals(TokenStatus.INACTIVE.toString());
     }

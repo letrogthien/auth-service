@@ -11,6 +11,7 @@ import com.gin.wegd.common.events.OtpEvModel;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -37,21 +38,36 @@ public class AuthController {
 
     @ResponseStatus(HttpStatus.OK)
     @PostMapping("/refresh-token")
-    public ApiResponse<LoginResponse> refreshToken (@RequestHeader("Authorization") final String refreshToken) {
+    public ApiResponse<LoginResponse> refreshToken (@RequestParam final String refreshToken) {
         return authService.refreshToken(refreshToken);
+    }
+
+    @ResponseStatus(HttpStatus.OK)
+    @PostMapping("/logout")
+    public ApiResponse<String> logout (@RequestHeader("Authorization") final String refreshToken) {
+        return authService.logout(refreshToken);
+    }
+
+    @ResponseStatus(HttpStatus.OK)
+    @PostMapping("/logout-all")
+    public ApiResponse<String> logoutAll (@RequestHeader("Authorization") final String refreshToken) {
+        return authService.logoutAll(refreshToken);
+    }
+
+    @ResponseStatus(HttpStatus.OK)
+    @PostMapping("/verify-2fa")
+    public ApiResponse<LoginResponse> verify2Fa (@RequestBody final Verify2FaRq verify2FaRq) {
+        return authService.verify2Fa(verify2FaRq);
     }
 
 
     @ResponseStatus(HttpStatus.OK)
     @GetMapping("/test")
     public String test(){
-        producerService.sendOtpEv(OtpEvModel.newBuilder()
-                .setEmail("agin0969@gmail.com")
-                .setOtp("555")
-                .setUserName("userName")
-                .build());
+        System.out.println(SecurityContextHolder.getContext().getAuthentication().getPrincipal());
         return "success";
     }
+
 
 
 }

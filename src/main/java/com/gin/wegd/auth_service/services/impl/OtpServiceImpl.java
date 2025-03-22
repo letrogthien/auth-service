@@ -19,6 +19,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.Random;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -30,7 +31,7 @@ public class OtpServiceImpl implements OtpService {
 
 
     @Override
-    public OtpModel getOtpValid(String userId,String otp, OtpPurpose otpPurpose) {
+    public OtpModel getOtpValid(UUID userId,String otp, OtpPurpose otpPurpose) {
         return otpRepository.findValidOtp(userId,otp, otpPurpose, LocalDateTime.now())
                 .orElseThrow(()-> new CustomException(ErrorCode.OTP_WRONG));
     }
@@ -85,7 +86,7 @@ public class OtpServiceImpl implements OtpService {
 
     }
 
-    private String extractUserIdInContext() {
+    private UUID extractUserIdInContext() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication == null) {
@@ -93,7 +94,7 @@ public class OtpServiceImpl implements OtpService {
         }
 
         Jwt jwt = (Jwt) authentication.getPrincipal();
-        return jwt.getClaim("id");
+        return UUID.fromString(jwt.getClaim("id"));
     }
 
 

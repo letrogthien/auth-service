@@ -2,11 +2,12 @@ package com.gin.wegd.auth_service.services;
 
 import com.gin.wegd.auth_service.models.User;
 import com.gin.wegd.auth_service.models.UserIdDocument;
-import org.springframework.stereotype.Service;
+
+
 
 import java.util.UUID;
 
-@Service
+
 public interface UserIdDocumentService {
     void verifyDocument(UUID documentId);
     void rejectDocument(UUID documentId);

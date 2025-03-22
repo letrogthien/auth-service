@@ -24,10 +24,8 @@ import com.gin.wegd.common.events.RegisterEvModel;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -46,12 +44,10 @@ public class AuthServiceImpl implements AuthService {
         User user = userService.getUserByUsername(loginRequest.getAccountName());
         validatePassword(loginRequest.getPassword(), user.getPassword());
         validateUserStatus(user.getStatus());
-
         if (user.isTwoFactorAuthEnabled()) {
             return handleTwoFactorAuth(user);
         }
-
-        return generateAndStoreTokens(user);
+        return generateTokensAndCache(user);
     }
 
     private void validatePassword(String rawPassword, String encodedPassword) {
@@ -78,20 +74,7 @@ public class AuthServiceImpl implements AuthService {
                 .build();
     }
 
-    private ApiResponse<LoginResponse> generateAndStoreTokens(User user) {
-        String token = jwtUtil.generateToken(user);
-        String refreshToken = jwtUtil.generateRefreshToken(user);
-        String key = generateRefreshKey(jwtUtil.extractClaims(token));
-        redisUtils.setRefreshToken(key, TokenStatus.ACTIVE.toString());
-        return ApiResponse.<LoginResponse>builder()
-                .data(LoginResponse.builder()
-                        .status("success")
-                        .token(token)
-                        .refreshToken(refreshToken)
-                        .build())
-                .message("Login success")
-                .build();
-    }
+
 
     private void validateEmailAndUsername(String email, String username) {
         if (userService.exitsByEmail(email)) {
@@ -141,20 +124,18 @@ public class AuthServiceImpl implements AuthService {
     }
 
 
-
     @Override
     public ApiResponse<LoginResponse> refreshToken(String refreshToken) {
-        if (jwtUtil.isTokenInvalidAndType(refreshToken, TokenType.REFRESH_TOKEN)) {
+        if (!isRefreshTokenValid(refreshToken)) {
             throw new CustomException(ErrorCode.INVALID_TOKEN);
         }
-
         Map<String, Object> claims = jwtUtil.extractClaims(refreshToken);
-        String key =claims.get("id").toString()+":"+ claims.get("jti").toString();
-        if (redisUtils.refreshTokenInactive(key)) {
+        String keyCache = generateCacheRefreshKey(claims);
+        if (!redisUtils.refreshTokenIsInactive(keyCache)) {
             throw new CustomException(ErrorCode.INVALID_TOKEN);
         }
         String userId = claims.get("id").toString();
-        User user = userService.getUserById(userId);
+        User user = userService.getUserById(UUID.fromString(userId));
         String token = jwtUtil.generateToken(user);
 
 
@@ -167,15 +148,18 @@ public class AuthServiceImpl implements AuthService {
                 .build();
     }
 
+    private boolean isRefreshTokenValid(String refreshToken) {
+        return jwtUtil.isTokenValid(refreshToken) &&
+                Objects.equals(jwtUtil.getTokenType(refreshToken), TokenType.REFRESH_TOKEN.toString());
+    }
+
     @Override
     public ApiResponse<String> logout(String refreshToken) {
-        if (jwtUtil.isTokenInvalidAndType(refreshToken, TokenType.REFRESH_TOKEN)) {
+        if (!jwtUtil.isTokenValid(refreshToken)) {
             throw new CustomException(ErrorCode.INVALID_TOKEN);
         }
-
-        Map<String, Object> claims = jwtUtil.extractClaims(refreshToken);
-        String key =claims.get("id").toString()+":"+ claims.get("jti").toString();
-        redisUtils.setRefreshToken(key, TokenStatus.INACTIVE.toString());
+        String keyCache = generateCacheRefreshKey(jwtUtil.extractClaims(refreshToken));
+        redisUtils.setRefreshToken(keyCache, TokenStatus.INACTIVE.toString());
         return ApiResponse.<String>builder()
                 .message("logout success")
                 .build();
@@ -183,7 +167,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public ApiResponse<String> logoutAll(String refreshToken) {
-        if (jwtUtil.isTokenInvalidAndType(refreshToken, TokenType.REFRESH_TOKEN)) {
+        if (isRefreshTokenValid(refreshToken)) {
             throw new CustomException(ErrorCode.INVALID_TOKEN);
         }
         Map<String, Object> claims = jwtUtil.extractClaims(refreshToken);
@@ -196,33 +180,42 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public ApiResponse<LoginResponse> verify2Fa(Verify2FaRq rq) {
-        jwtUtil.isTmpKeyValid(rq.getToken());
+        if (!jwtUtil.isTokenValid(rq.getToken())) {
+            throw new CustomException(ErrorCode.UNAUTHENTICATED);
+        }
         Map<String, Object> claims = jwtUtil.extractClaims(rq.getToken());
-        String userId = claims.get("id").toString();
+        if (!claims.get("type").equals(TokenType.TMP_TOKEN.toString())) {
+            throw new CustomException(ErrorCode.UNAUTHENTICATED);
+        }
+        UUID userId = UUID.fromString((String) claims.get("id"));
         otpService.getOtpValid(userId, rq.getOtp(), OtpPurpose.TWO_FACTOR_AUTHENTICATION);
         User user = userService.getUserById(userId);
-        String token = jwtUtil.generateToken(user);
-        String refreshToken = jwtUtil.generateRefreshToken(user);
-        String key =this.generateRefreshKey(claims);
-        redisUtils.setRefreshToken(key, TokenStatus.ACTIVE.toString());
-        return ApiResponse.<LoginResponse>builder()
-                .data(LoginResponse.builder()
-                        .status("success")
-                        .token(token)
-                        .refreshToken(refreshToken)
-                        .build())
-                .message("2FA success")
-                .build();
+        return generateTokensAndCache(user);
     }
 
-    private String generateRefreshKey(Map<String, Object> claims) {
+    private String generateCacheRefreshKey(Map<String, Object> claims) {
         String userId = Optional.ofNullable(claims.get("id"))
                 .map(Object::toString)
                 .orElseThrow(() -> new CustomException(ErrorCode.INVALID_TOKEN));
         String jti = Optional.ofNullable(claims.get("jti"))
                 .map(Object::toString)
                 .orElseThrow(() -> new CustomException(ErrorCode.INVALID_TOKEN));
+
         return userId + ":" + jti;
+    }
+    private ApiResponse<LoginResponse> generateTokensAndCache (User user) {
+        String token = jwtUtil.generateToken(user);
+        String refreshToken = jwtUtil.generateRefreshToken(user);
+        String keyCache = this.generateCacheRefreshKey(jwtUtil.extractClaims(refreshToken));
+        redisUtils.setRefreshToken(keyCache, TokenStatus.ACTIVE.toString());
+        return ApiResponse.<LoginResponse>builder()
+                .data(LoginResponse.builder()
+                        .status("success")
+                        .token(token)
+                        .refreshToken(refreshToken)
+                        .build())
+                .message("Login success")
+                .build();
     }
 
 }

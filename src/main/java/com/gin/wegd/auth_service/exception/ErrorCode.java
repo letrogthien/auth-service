@@ -28,7 +28,9 @@ public enum ErrorCode {
     OTP_INVALID_PURPOSE(404,"invalid otp purpose" ,HttpStatus.BAD_REQUEST ),
     BLOCK_REQUEST(400,"request is block",HttpStatus.BAD_REQUEST),
     KAFKA_SEND_FAILED(500, "Failed to send reset password event to Kafka", HttpStatus.INTERNAL_SERVER_ERROR),
-    EXECUTOR_SUBMISSION_FAILED(500, "Failed to submit task to executor", HttpStatus.INTERNAL_SERVER_ERROR);
+    EXECUTOR_SUBMISSION_FAILED(500, "Failed to submit task to executor", HttpStatus.INTERNAL_SERVER_ERROR),
+    INVALID_TOKEN_SIGNATURE(401, "INVALID", HttpStatus.UNAUTHORIZED),
+    REFRESH_TOKEN_UNAVAILABLE(401, "Refresh token is unavailable", HttpStatus.UNAUTHORIZED),;
 
 
 

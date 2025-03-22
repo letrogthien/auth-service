@@ -7,7 +7,7 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-
+import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.*;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +18,7 @@ import java.text.ParseException;
 @Service
 @RequiredArgsConstructor
 public class CustomJwtDecoder implements JwtDecoder {
+
     @Value("${security.secret.key}")
     private String secretKey;
     @Override
@@ -39,7 +40,7 @@ public class CustomJwtDecoder implements JwtDecoder {
     private JwtDecoder jwtDecoder() {
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         SecretKey key = Keys.hmacShaKeyFor(keyBytes);
-        return NimbusJwtDecoder.withSecretKey(key).build();
+        return NimbusJwtDecoder.withSecretKey(key).macAlgorithm(MacAlgorithm.HS256).build();
     }
 
     private JwtDecoder googleJwtDecoder() {
