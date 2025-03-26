@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS users (
     last_name VARCHAR(50),
     2fa_enabled BOOLEAN DEFAULT FALSE
     );
-
+ALTER TABLE users ADD FULLTEXT(username);
 CREATE TABLE IF NOT EXISTS user_roles (
                                           user_id BINARY(16),
     role ENUM('USER', 'ADMIN', 'MODERATOR'),

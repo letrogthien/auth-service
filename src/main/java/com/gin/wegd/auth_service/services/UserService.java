@@ -1,7 +1,7 @@
 package com.gin.wegd.auth_service.services;
 
 import com.gin.wegd.auth_service.models.User;
-
+import com.gin.wegd.auth_service.models.responses.ApiResponse;
 
 
 import java.util.List;
@@ -18,4 +18,8 @@ public interface UserService {
     boolean exitsByEmail(String email);
     boolean exitsByUserName(String userName);
     void banUser(UUID userId);
+    List<String> getAllUserNames();
+
+
+    ApiResponse<User> getUserDetailsByUsername(String userName);
 }

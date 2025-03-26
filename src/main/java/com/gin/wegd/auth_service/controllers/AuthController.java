@@ -7,11 +7,8 @@ import com.gin.wegd.auth_service.models.responses.ApiResponse;
 import com.gin.wegd.auth_service.models.responses.LoginResponse;
 import com.gin.wegd.auth_service.models.responses.RegisterResponse;
 import com.gin.wegd.auth_service.services.AuthService;
-import com.gin.wegd.common.events.OtpEvModel;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -44,13 +41,13 @@ public class AuthController {
 
     @ResponseStatus(HttpStatus.OK)
     @PostMapping("/logout")
-    public ApiResponse<String> logout (@RequestHeader("Authorization") final String refreshToken) {
+    public ApiResponse<String> logout (@RequestParam final String refreshToken) {
         return authService.logout(refreshToken);
     }
 
     @ResponseStatus(HttpStatus.OK)
     @PostMapping("/logout-all")
-    public ApiResponse<String> logoutAll (@RequestHeader("Authorization") final String refreshToken) {
+    public ApiResponse<String> logoutAll (@RequestParam final String refreshToken) {
         return authService.logoutAll(refreshToken);
     }
 
@@ -64,7 +61,6 @@ public class AuthController {
     @ResponseStatus(HttpStatus.OK)
     @GetMapping("/test")
     public String test(){
-        System.out.println(SecurityContextHolder.getContext().getAuthentication().getPrincipal());
         return "success";
     }
 

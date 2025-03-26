@@ -17,6 +17,7 @@ import com.gin.wegd.auth_service.models.responses.ApiResponse;
 import com.gin.wegd.auth_service.models.responses.LoginResponse;
 import com.gin.wegd.auth_service.models.responses.RegisterResponse;
 import com.gin.wegd.auth_service.redis.RedisUtils;
+import com.gin.wegd.auth_service.redis.UserCacheService;
 import com.gin.wegd.auth_service.services.AuthService;
 import com.gin.wegd.auth_service.services.OtpService;
 import com.gin.wegd.auth_service.services.UserService;
@@ -36,6 +37,7 @@ public class AuthServiceImpl implements AuthService {
     private final UserMapper userMapper;
     private final ProducerService producerService;
     private final RedisUtils redisUtils;
+    private final UserCacheService userCacheService;
     private final OtpService otpService;
 
 
@@ -91,6 +93,7 @@ public class AuthServiceImpl implements AuthService {
     public ApiResponse<RegisterResponse> register(RegisterRq registerRequest) {
         validateEmailAndUsername(registerRequest.getEmail(), registerRequest.getUserName());
         User u = createUser(registerRequest);
+        userCacheService.addUsernameToCache(u.getUserName());
         RegisterEvModel registerEvModel = RegisterEvModel.newBuilder()
                 .setUserName(u.getUserName())
                 .setEmail(u.getEmail())
@@ -131,7 +134,7 @@ public class AuthServiceImpl implements AuthService {
         }
         Map<String, Object> claims = jwtUtil.extractClaims(refreshToken);
         String keyCache = generateCacheRefreshKey(claims);
-        if (!redisUtils.refreshTokenIsInactive(keyCache)) {
+        if (redisUtils.refreshTokenIsInactive(keyCache)) {
             throw new CustomException(ErrorCode.INVALID_TOKEN);
         }
         String userId = claims.get("id").toString();

@@ -1,10 +1,12 @@
 package com.gin.wegd.auth_service.services.impl;
 
+import com.gin.wegd.auth_service.models.responses.ApiResponse;
 import com.gin.wegd.auth_service.models.user_attribute.UserStatus;
 import com.gin.wegd.auth_service.exception.CustomException;
 import com.gin.wegd.auth_service.exception.ErrorCode;
 import com.gin.wegd.auth_service.mapper.UserMapper;
 import com.gin.wegd.auth_service.models.User;
+import com.gin.wegd.auth_service.redis.UserCacheService;
 import com.gin.wegd.auth_service.repositories.UserRepository;
 import com.gin.wegd.auth_service.services.UserService;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +21,7 @@ import java.util.UUID;
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+    private final UserCacheService userCacheService;
 
 
     @Override
@@ -84,5 +87,18 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(()-> new CustomException(ErrorCode.USER_NOT_EXISTED));
         u.setStatus(UserStatus.BANNED);
         userRepository.save(u);
+    }
+
+
+    @Override
+    public List<String> getAllUserNames() {
+        return userRepository.getAllUserNames();
+    }
+
+    @Override
+    public ApiResponse<User> getUserDetailsByUsername(String userName) {
+        return ApiResponse.<User>builder()
+                .data(this.getUserByUsername(userName))
+                .build();
     }
 }

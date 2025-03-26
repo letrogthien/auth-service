@@ -2,8 +2,7 @@ package com.gin.wegd.auth_service.redis;
 
 
 import com.gin.wegd.auth_service.comon.TokenStatus;
-import com.gin.wegd.auth_service.exception.CustomException;
-import com.gin.wegd.auth_service.exception.ErrorCode;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;

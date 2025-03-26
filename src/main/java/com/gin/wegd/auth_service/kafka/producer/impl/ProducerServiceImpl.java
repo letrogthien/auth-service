@@ -18,6 +18,7 @@ public class ProducerServiceImpl implements ProducerService {
 
     @Override
     public void registerEv(RegisterEvModel ev) {
+
         kafkaTemplate.send(AuthTopic.REGISTER.getName(), ev);
     }
 
