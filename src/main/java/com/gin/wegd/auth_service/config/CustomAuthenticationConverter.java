@@ -24,7 +24,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class CustomAuthenticationConverter implements Converter<Jwt, AbstractAuthenticationToken> {
     private final UserService userService;
-    private final RedisTemplate<String, String> stringRedisTemplate;
 
     @Override
     public AbstractAuthenticationToken convert(@NonNull Jwt jwt) {

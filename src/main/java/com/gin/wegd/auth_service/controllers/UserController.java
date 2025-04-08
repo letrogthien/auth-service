@@ -21,4 +21,5 @@ public class UserController {
     public ApiResponse<User> getUserByUsername(@RequestParam String username){
         return userService.getUserDetailsByUsername(username);
     }
+
 }

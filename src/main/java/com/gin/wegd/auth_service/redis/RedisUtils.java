@@ -14,9 +14,10 @@ import java.util.concurrent.TimeUnit;
 @Component
 @RequiredArgsConstructor
 public class RedisUtils {
+
     private final RedisTemplate<String, String> stringRedisTemplate;
 
-    @Value("${jwt.refreshToken.expiration}")
+    @Value("${jwt.refresh-token.expiration}")
     private long refreshTokenExpiration;
 
     public void setRefreshToken(String key, String value) {

@@ -1,0 +1,9 @@
+{
+  "type": "record",
+  "name": "BaseNotifyEmail",
+  "namespace": "com.gin.wegd.common.events",
+  "fields": [
+    {"name": "email", "type": "string"},
+    {"name": "data", "type": "string"}
+  ]
+}

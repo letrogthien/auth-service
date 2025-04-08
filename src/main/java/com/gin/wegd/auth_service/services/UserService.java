@@ -22,4 +22,9 @@ public interface UserService {
 
 
     ApiResponse<User> getUserDetailsByUsername(String userName);
+    ApiResponse<List<String>>searchUserByPrefix(String keyword);
+    void addUsernameToCache(String username);
+    void removeUsernameFromCache(String username);
+
+    void unbanUser(UUID userId);
 }

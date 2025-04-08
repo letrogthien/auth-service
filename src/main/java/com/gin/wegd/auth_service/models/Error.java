@@ -26,4 +26,9 @@ public class Error {
 
     @Column(name = "timestamp", nullable = false)
     private LocalDateTime timestamp;
+
+    @PrePersist
+    private void onCreate() {
+        this.timestamp = LocalDateTime.now();
+    }
 }

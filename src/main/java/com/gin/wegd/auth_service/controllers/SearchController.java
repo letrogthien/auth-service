@@ -3,6 +3,7 @@ package com.gin.wegd.auth_service.controllers;
 
 import com.gin.wegd.auth_service.models.responses.ApiResponse;
 import com.gin.wegd.auth_service.redis.UserCacheService;
+import com.gin.wegd.auth_service.services.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,11 +17,11 @@ import java.util.Set;
 @RestController
 @RequestMapping("api/v1/search")
 public class SearchController {
-    private final UserCacheService  userCacheService;
+    private final UserService userService;
 
-    @GetMapping("/user")
+    @GetMapping("/user/name")
     public ApiResponse<List<String>> searchByPrefix(@RequestParam String keyword) {
-        return userCacheService.searchByPrefix(keyword);
+        return userService.searchUserByPrefix(keyword);
     }
 
 

@@ -30,7 +30,8 @@ public enum ErrorCode {
     KAFKA_SEND_FAILED(500, "Failed to send reset password event to Kafka", HttpStatus.INTERNAL_SERVER_ERROR),
     EXECUTOR_SUBMISSION_FAILED(500, "Failed to submit task to executor", HttpStatus.INTERNAL_SERVER_ERROR),
     INVALID_TOKEN_SIGNATURE(401, "INVALID", HttpStatus.UNAUTHORIZED),
-    REFRESH_TOKEN_UNAVAILABLE(401, "Refresh token is unavailable", HttpStatus.UNAUTHORIZED),;
+    REFRESH_TOKEN_UNAVAILABLE(401, "Refresh token is unavailable", HttpStatus.UNAUTHORIZED),
+    IO_EXCEPTION(500, "IO Exception", HttpStatus.INTERNAL_SERVER_ERROR),;
 
 
 

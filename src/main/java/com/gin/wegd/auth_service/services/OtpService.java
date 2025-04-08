@@ -14,8 +14,7 @@ public interface OtpService {
     void saveOtp(OtpModel otpModel);
     void sendOtp(OtpModel otpModel);
     OtpModel generateOtp(User user, OtpPurpose type);
-    void changeToInActive(OtpModel otpModel);
-
+    void deleteOtp(OtpModel otpModel);
     ApiResponse<String> createAndSendOtp(OtpPurpose type);
 
 }

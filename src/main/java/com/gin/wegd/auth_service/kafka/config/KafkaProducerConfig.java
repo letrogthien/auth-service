@@ -58,12 +58,10 @@ public class KafkaProducerConfig {
     NewTopic sendOtpTopic() {
         return new NewTopic(AuthTopic.OTP.getName(), 1, (short) 1);
     }
-    @KafkaListener(topics = "auth.ev.otp",
-            groupId = "otp-gr1"
-    )
-    public void sendOtpEvConsumer(@Payload OtpEvModel ev, Acknowledgment ack) {
-        System.out.println("Received OTP event: " + ev);
-        ack.acknowledge();
+
+    @Bean
+    NewTopic baseNotifyEmailTopic() {
+        return new NewTopic(AuthTopic.NOTIFY_EMAIL.getName(), 1, (short) 1);
     }
 
 

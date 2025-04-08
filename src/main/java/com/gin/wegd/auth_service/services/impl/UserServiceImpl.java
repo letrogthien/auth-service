@@ -9,19 +9,20 @@ import com.gin.wegd.auth_service.models.User;
 import com.gin.wegd.auth_service.redis.UserCacheService;
 import com.gin.wegd.auth_service.repositories.UserRepository;
 import com.gin.wegd.auth_service.services.UserService;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
-    private final UserMapper userMapper;
-    private final UserCacheService userCacheService;
+    private final RedisTemplate<String, String> redisTemplate;
+    private static final String USERNAME_KEY = "usernames";
 
 
     @Override
@@ -101,4 +102,42 @@ public class UserServiceImpl implements UserService {
                 .data(this.getUserByUsername(userName))
                 .build();
     }
+
+    @Override
+    public ApiResponse<List<String>> searchUserByPrefix(String keyword) {
+        Set<String> usernames = redisTemplate.opsForSet().members(USERNAME_KEY);
+        List<String> result = Optional.ofNullable(usernames)
+                .orElse(Collections.emptySet())
+                .stream()
+                .filter(username -> username.contains(keyword))
+                .toList();
+        return ApiResponse.<List<String>>builder()
+                .data(result)
+                .message("Search success")
+                .build();
+    }
+
+    @PostConstruct
+    public void cacheUsernames() {
+        List<String> usernames = this.getAllUserNames();
+        usernames.forEach(username -> redisTemplate.opsForSet().add(USERNAME_KEY, username));
+    }
+    @Override
+    public void addUsernameToCache(String username) {
+        redisTemplate.opsForSet().add(USERNAME_KEY, username);
+    }
+
+    @Override
+    public void removeUsernameFromCache(String username) {
+        redisTemplate.opsForSet().remove(USERNAME_KEY, username);
+    }
+
+    @Override
+    public void unbanUser(UUID userId) {
+        User u= userRepository.findById(userId)
+                .orElseThrow(()-> new CustomException(ErrorCode.USER_NOT_EXISTED));
+        u.setStatus(UserStatus.ACTIVE);
+        userRepository.save(u);
+    }
+
 }

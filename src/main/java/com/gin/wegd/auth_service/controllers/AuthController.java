@@ -9,6 +9,7 @@ import com.gin.wegd.auth_service.models.responses.RegisterResponse;
 import com.gin.wegd.auth_service.services.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -20,6 +21,7 @@ public class AuthController {
     private final ProducerService producerService;
 
     private final AuthService authService;
+
 
     @ResponseStatus(HttpStatus.OK)
     @PostMapping("/login")
@@ -35,18 +37,22 @@ public class AuthController {
 
     @ResponseStatus(HttpStatus.OK)
     @PostMapping("/refresh-token")
+    @PreAuthorize("isAuthenticated()")
     public ApiResponse<LoginResponse> refreshToken (@RequestParam final String refreshToken) {
         return authService.refreshToken(refreshToken);
     }
 
+    
     @ResponseStatus(HttpStatus.OK)
     @PostMapping("/logout")
+    @PreAuthorize("hasAnyAuthority('USER')")
     public ApiResponse<String> logout (@RequestParam final String refreshToken) {
         return authService.logout(refreshToken);
     }
 
     @ResponseStatus(HttpStatus.OK)
     @PostMapping("/logout-all")
+    @PreAuthorize("hasAnyAuthority('USER')")
     public ApiResponse<String> logoutAll (@RequestParam final String refreshToken) {
         return authService.logoutAll(refreshToken);
     }
@@ -58,11 +64,6 @@ public class AuthController {
     }
 
 
-    @ResponseStatus(HttpStatus.OK)
-    @GetMapping("/test")
-    public String test(){
-        return "success";
-    }
 
 
 

@@ -5,6 +5,7 @@ import com.gin.wegd.auth_service.comon.Role;
 import com.gin.wegd.auth_service.comon.TokenStatus;
 import com.gin.wegd.auth_service.comon.TokenType;
 import com.gin.wegd.auth_service.kafka.producer.ProducerService;
+import com.gin.wegd.auth_service.models.OtpModel;
 import com.gin.wegd.auth_service.models.user_attribute.UserStatus;
 import com.gin.wegd.auth_service.config.CustomPasswordEncoder;
 import com.gin.wegd.auth_service.exception.CustomException;
@@ -37,11 +38,11 @@ public class AuthServiceImpl implements AuthService {
     private final UserMapper userMapper;
     private final ProducerService producerService;
     private final RedisUtils redisUtils;
-    private final UserCacheService userCacheService;
     private final OtpService otpService;
 
 
     @Override
+    @Transactional
     public ApiResponse<LoginResponse> login(LoginRq loginRequest) {
         User user = userService.getUserByUsername(loginRequest.getAccountName());
         validatePassword(loginRequest.getPassword(), user.getPassword());
@@ -93,7 +94,7 @@ public class AuthServiceImpl implements AuthService {
     public ApiResponse<RegisterResponse> register(RegisterRq registerRequest) {
         validateEmailAndUsername(registerRequest.getEmail(), registerRequest.getUserName());
         User u = createUser(registerRequest);
-        userCacheService.addUsernameToCache(u.getUserName());
+        userService.addUsernameToCache(u.getUserName());
         RegisterEvModel registerEvModel = RegisterEvModel.newBuilder()
                 .setUserName(u.getUserName())
                 .setEmail(u.getEmail())
@@ -191,7 +192,8 @@ public class AuthServiceImpl implements AuthService {
             throw new CustomException(ErrorCode.UNAUTHENTICATED);
         }
         UUID userId = UUID.fromString((String) claims.get("id"));
-        otpService.getOtpValid(userId, rq.getOtp(), OtpPurpose.TWO_FACTOR_AUTHENTICATION);
+        OtpModel otpModel= otpService.getOtpValid(userId, rq.getOtp(), OtpPurpose.TWO_FACTOR_AUTHENTICATION);
+        otpService.deleteOtp(otpModel);
         User user = userService.getUserById(userId);
         return generateTokensAndCache(user);
     }

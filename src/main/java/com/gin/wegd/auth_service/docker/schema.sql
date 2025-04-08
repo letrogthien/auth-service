@@ -72,3 +72,12 @@ CREATE TABLE IF NOT EXISTS error (
     message TEXT NOT NULL,
     timestamp DATETIME NOT NULL
     );
+CREATE TABLE IF NOT EXISTS delete_kyc_requests (
+                                     id INT AUTO_INCREMENT PRIMARY KEY,
+                                     user_id UUID NOT NULL,
+                                     verify_img_path VARCHAR(255) NOT NULL,
+                                     status ENUM('PENDING', 'APPROVED', 'REJECTED') DEFAULT 'PENDING',
+                                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                                     FOREIGN KEY (user_id) REFERENCES users(id)
+);

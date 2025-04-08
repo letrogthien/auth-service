@@ -7,6 +7,9 @@ import com.gin.wegd.auth_service.models.requests.ChangePhoneNumberRq;
 import com.gin.wegd.auth_service.models.requests.ForgetPasswordRq;
 import com.gin.wegd.auth_service.models.requests.UpdateUserRq;
 import com.gin.wegd.auth_service.models.responses.ApiResponse;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 
 
 public interface UserCenterService {
@@ -24,4 +27,6 @@ public interface UserCenterService {
     ApiResponse<String> disable2fa(String otp);
 
     ApiResponse<String> registerMiddleMan();
+    ApiResponse<String> addKyc(MultipartFile frontId, MultipartFile backId);
+    ApiResponse<String> deleteKyc(String otp, MultipartFile verifyImg);
 }

@@ -8,7 +8,7 @@ import com.gin.wegd.auth_service.kafka.producer.ProducerService;
 import com.gin.wegd.auth_service.models.OtpModel;
 import com.gin.wegd.auth_service.models.User;
 import com.gin.wegd.auth_service.models.responses.ApiResponse;
-import com.gin.wegd.auth_service.repositories.OtpRepository;
+import com.gin.wegd.auth_service.redis.OtpCacheService;
 import com.gin.wegd.auth_service.services.OtpService;
 import com.gin.wegd.auth_service.services.UserService;
 import com.gin.wegd.common.events.OtpEvModel;
@@ -25,20 +25,20 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class OtpServiceImpl implements OtpService {
     private final ProducerService producerService;
-    private final OtpRepository otpRepository;
+    private final OtpCacheService otpCacheService;
     private final Random random = new Random();
     private final UserService userService;
 
 
     @Override
     public OtpModel getOtpValid(UUID userId,String otp, OtpPurpose otpPurpose) {
-        return otpRepository.findValidOtp(userId,otp, otpPurpose, LocalDateTime.now())
+        return otpCacheService.findValidOtp(userId,otp, otpPurpose)
                 .orElseThrow(()-> new CustomException(ErrorCode.OTP_WRONG));
     }
 
     @Override
     public void saveOtp(OtpModel otpModel) {
-        otpRepository.save(otpModel);
+        otpCacheService.save(otpModel);
     }
 
     @Override
@@ -56,9 +56,6 @@ public class OtpServiceImpl implements OtpService {
         int genOtp = this.random.nextInt(9000)+1000;
         OtpModel otpModel = OtpModel.builder()
                 .otp(String.valueOf(genOtp))
-                .active(true)
-                .createAt(LocalDateTime.now())
-                .expiredAt(LocalDateTime.now().plusMinutes(10))
                 .otpPurpose(type)
                 .userId(user.getId())
                 .email(user.getEmail())
@@ -68,12 +65,11 @@ public class OtpServiceImpl implements OtpService {
         return otpModel;
     }
 
-
     @Override
-    public void changeToInActive(OtpModel otpModel) {
-        otpModel.setActive(false);
-        this.saveOtp(otpModel);
+    public void deleteOtp(OtpModel otpModel) {
+        otpCacheService.deleteOtp(otpCacheService.generateKey(otpModel.getUserId(), otpModel.getOtpPurpose()));
     }
+
 
     @Override
     public ApiResponse<String> createAndSendOtp(OtpPurpose type) {
@@ -82,8 +78,8 @@ public class OtpServiceImpl implements OtpService {
         this.sendOtp(otpModel);
         return ApiResponse.<String>builder()
                 .message("otp sent")
+                .data("otp sent")
                 .build();
-
     }
 
     private UUID extractUserIdInContext() {

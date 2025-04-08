@@ -9,6 +9,7 @@ import com.gin.wegd.auth_service.exception.CustomException;
 import com.gin.wegd.auth_service.exception.ErrorCode;
 import com.gin.wegd.auth_service.kafka.producer.ProducerService;
 import com.gin.wegd.auth_service.mapper.UserMapper;
+import com.gin.wegd.auth_service.models.DeleteKycRequest;
 import com.gin.wegd.auth_service.models.OtpModel;
 import com.gin.wegd.auth_service.models.User;
 import com.gin.wegd.auth_service.models.UserIdDocument;
@@ -19,10 +20,7 @@ import com.gin.wegd.auth_service.models.requests.UpdateUserRq;
 import com.gin.wegd.auth_service.models.responses.ApiResponse;
 import com.gin.wegd.auth_service.models.user_attribute.UserPhone;
 import com.gin.wegd.auth_service.models.user_attribute.UserStatus;
-import com.gin.wegd.auth_service.services.OtpService;
-import com.gin.wegd.auth_service.services.UserCenterService;
-import com.gin.wegd.auth_service.services.UserIdDocumentService;
-import com.gin.wegd.auth_service.services.UserService;
+import com.gin.wegd.auth_service.services.*;
 import com.gin.wegd.common.events.ForgotPasswordEvModel;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -30,7 +28,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import org.springframework.web.multipart.MultipartFile;
 import java.util.UUID;
 
 
@@ -44,6 +42,8 @@ public class UserCenterServiceImpl implements UserCenterService {
     private final PasswordGenerator passwordGenerator;
     private final UserMapper userMapper;
     private final UserIdDocumentService userIdDocumentService;
+    private final UtilsService utilsService;
+    private final DeleteKycService deleteKycService;
 
 
     @Override
@@ -73,7 +73,7 @@ public class UserCenterServiceImpl implements UserCenterService {
             throw new CustomException(ErrorCode.CURRENT_PASSWORD_INVALID);
         }
         OtpModel otpModel = otpService.getOtpValid(userId, changePasswordRq.getOtp(), OtpPurpose.CHANGE_PASSWORD);
-        otpService.changeToInActive(otpModel);
+        otpService.deleteOtp(otpModel);
 
         u.setPassword(passwordEncoder.passwordEncoder().encode(changePasswordRq.getNewPassword()));
         userService.saveUser(u);
@@ -92,11 +92,9 @@ public class UserCenterServiceImpl implements UserCenterService {
             throw new CustomException(ErrorCode.BLOCK_REQUEST);
         }
         OtpModel otpModel = otpService.getOtpValid(userId, otp, OtpPurpose.DELETE_ACCOUNT);
-        otpService.changeToInActive(otpModel);
         u.setStatus(UserStatus.INACTIVE);
         userService.saveUser(u);
-        otpModel.setActive(false);
-        otpService.saveOtp(otpModel);
+        otpService.deleteOtp(otpModel);
         return ApiResponse.<String>builder()
                 .message("delete success")
                 .build();
@@ -112,7 +110,7 @@ public class UserCenterServiceImpl implements UserCenterService {
             throw new CustomException(ErrorCode.BLOCK_REQUEST);
         }
         OtpModel otpModel = otpService.getOtpValid(userId, otp, OtpPurpose.VERIFY_PHONE_NUMBER);
-        otpService.changeToInActive(otpModel);
+        otpService.deleteOtp(otpModel);
         u.getPhone().setActive(true);
         userService.saveUser(u);
         return ApiResponse.<String>builder()
@@ -132,7 +130,7 @@ public class UserCenterServiceImpl implements UserCenterService {
             OtpModel otpModel = otpService.getOtpValid(userId,
                     changePhoneNumberRq.getOtp(),
                     OtpPurpose.CHANGE_PHONE_NUMBER);
-            otpService.changeToInActive(otpModel);
+            otpService.deleteOtp(otpModel);
         }
         userPhone.setPhone(changePhoneNumberRq.getPhoneNumber());
         userPhone.setActive(true);
@@ -194,6 +192,51 @@ public class UserCenterServiceImpl implements UserCenterService {
                 .build();
     }
 
+    @Override
+    @Transactional
+    public ApiResponse<String> addKyc(MultipartFile frontId, MultipartFile backId){
+        UUID userId = this.extractUserIdInContext();
+        User u = userService.getUserById(userId);
+        if (u.getUserIdDocument() != null) {
+            throw new CustomException(ErrorCode.BLOCK_REQUEST);
+        }
+        String front = utilsService.saveKycFile(frontId);
+        String back = utilsService.saveKycFile(backId);
+        UserIdDocument userIdDocument = new UserIdDocument();
+        userIdDocument.setUser(u);
+        userIdDocument.setFrontId(front);
+        userIdDocument.setBackId(back);
+        userIdDocument.setStatus(UserIdDocStatus.PENDING);
+        userIdDocumentService.createDocument(u, front, back);
+        return ApiResponse.<String>builder()
+                .message("add kyc success, wait for admin to approve")
+                .build();
+
+    }
+
+
+    ///      it should be implemented in the future
+    ///     to add the deleteKyc method with Image verification to verify by admin
+    @Override
+    public ApiResponse<String> deleteKyc(String otp, MultipartFile verifyImg) {
+        UUID userId = this.extractUserIdInContext();
+        User u = userService.getUserById(userId);
+        if (u.getUserIdDocument() == null) {
+            throw new CustomException(ErrorCode.BLOCK_REQUEST);
+        }
+        OtpModel otpModel = otpService.getOtpValid(userId, otp, OtpPurpose.DELETE_KYC);
+        otpService.deleteOtp(otpModel);
+        String verifyImgPath = utilsService.saveKycFile(verifyImg);
+        DeleteKycRequest deleteKycRequest = DeleteKycRequest.builder()
+                .verifyImgPath(verifyImgPath)
+                .userId(userId).build();
+        deleteKycService.saveObj(deleteKycRequest);
+        userIdDocumentService.deleteDocument(u.getUserIdDocument().getId());
+        return ApiResponse.<String>builder()
+                .message("delete kyc success")
+                .build();
+    }
+
 
     private boolean checkPassword(ChangePasswordRq changePasswordRq, User user) {
         return passwordEncoder.passwordEncoder().matches(changePasswordRq.getOldPassword(), user.getPassword());
@@ -210,8 +253,6 @@ public class UserCenterServiceImpl implements UserCenterService {
         Jwt jwt = (Jwt) authentication.getPrincipal();
         return UUID.fromString(jwt.getClaim("id"));
     }
-
-
 
 
 }

@@ -27,10 +27,10 @@ public class JwtUtils {
     @Value("${security.secret.tmpKey}")
     private String secretTmpKey;
 
-    @Value("${security.secret.expiration}")
+    @Value("${security.secret.access.expiration}")
     private long jwtExpiration;
 
-    @Value("${security.secret.refreshToken}")
+    @Value("${security.secret.refresh.expiration}")
     private long refreshExpiration;
 
     public String generateToken(User user) {
@@ -54,6 +54,8 @@ public class JwtUtils {
             List<String> authorities = user.getRole().stream()
                     .map(Role::name)
                     .toList();
+            extraClaims.put("sub", user.getEmail());
+            extraClaims.put("kyc", user.getUserIdDocument().getStatus());
             extraClaims.put("roles", authorities);
             extraClaims.put("id", user.getId());
             extraClaims.put("jti", UUID.randomUUID().toString());

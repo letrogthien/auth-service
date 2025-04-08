@@ -3,6 +3,7 @@ package com.gin.wegd.auth_service.kafka.producer.impl;
 
 import com.gin.wegd.auth_service.kafka.producer.ProducerService;
 import com.gin.wegd.auth_service.kafka.topics.AuthTopic;
+import com.gin.wegd.common.events.BaseNotifyEmail;
 import com.gin.wegd.common.events.ForgotPasswordEvModel;
 import com.gin.wegd.common.events.OtpEvModel;
 import com.gin.wegd.common.events.RegisterEvModel;
@@ -31,5 +32,10 @@ public class ProducerServiceImpl implements ProducerService {
     @Override
     public void forgotPasswordEv(ForgotPasswordEvModel ev) {
         kafkaTemplate.send(AuthTopic.PASSWORD_RESET.getName(), ev);
+    }
+
+    @Override
+    public void baseNotifyEv(BaseNotifyEmail ev) {
+        kafkaTemplate.send(AuthTopic.NOTIFY_EMAIL.getName(), ev);
     }
 }
