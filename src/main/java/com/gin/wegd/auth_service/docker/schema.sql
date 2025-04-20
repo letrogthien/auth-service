@@ -5,17 +5,24 @@ CREATE TABLE IF NOT EXISTS users (
     password VARCHAR(255) NOT NULL,
     gender ENUM('MALE', 'FEMALE'),
     date_of_birth DATE,
-    status ENUM('ACTIVE', 'INACTIVE', 'BANED'),
+    status ENUM('ACTIVE', 'INACTIVE', 'BANNED'),
     first_name VARCHAR(50),
     last_name VARCHAR(50),
     2fa_enabled BOOLEAN DEFAULT FALSE
     );
 ALTER TABLE users ADD FULLTEXT(username);
+
+CREATE TABLE IF NOT EXISTS roles (
+                                     id BINARY(16) PRIMARY KEY,
+    name ENUM('USER', 'ADMIN', 'GUEST', 'MIDDLE_MAN') NOT NULL UNIQUE
+    );
+
 CREATE TABLE IF NOT EXISTS user_roles (
                                           user_id BINARY(16),
-    role ENUM('USER', 'ADMIN', 'MODERATOR'),
-    PRIMARY KEY (user_id, role),
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    role_id BINARY(16),
+    PRIMARY KEY (user_id, role_id),
+    CONSTRAINT fk_user_roles_user_id FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_user_roles_role_id FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE
     );
 
 CREATE TABLE IF NOT EXISTS instance_message (
@@ -49,35 +56,29 @@ CREATE TABLE IF NOT EXISTS user_id_documents (
     user_id BINARY(16) NOT NULL UNIQUE,
     front_id VARCHAR(255) NOT NULL,
     back_id VARCHAR(255) NOT NULL,
-    status ENUM('PENDING', 'APPROVED', 'REJECTED') NOT NULL,
+    status ENUM('PENDING', 'APPROVED', 'REJECTED') DEFAULT 'PENDING' ,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     );
-
-CREATE TABLE IF NOT EXISTS otp (
-                                   id BINARY(16) PRIMARY KEY,
-    user_id BINARY(16),
-    username VARCHAR(255),
-    email VARCHAR(255),
-    created_at DATETIME,
-    expired_at DATETIME,
-    otp VARCHAR(255) NOT NULL,
-    otp_purpose ENUM('REGISTRATION', 'PASSWORD_RESET', 'VERIFICATION'),
-    active BOOLEAN NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-    );
-
 
 CREATE TABLE IF NOT EXISTS error (
                                      id BINARY(16) PRIMARY KEY,
     message TEXT NOT NULL,
     timestamp DATETIME NOT NULL
     );
+
 CREATE TABLE IF NOT EXISTS delete_kyc_requests (
-                                     id INT AUTO_INCREMENT PRIMARY KEY,
-                                     user_id UUID NOT NULL,
-                                     verify_img_path VARCHAR(255) NOT NULL,
-                                     status ENUM('PENDING', 'APPROVED', 'REJECTED') DEFAULT 'PENDING',
-                                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                                     FOREIGN KEY (user_id) REFERENCES users(id)
-);
+                                                   id BINARY(16) PRIMARY KEY,
+    user_id BINARY(16) NOT NULL,
+    verify_img_path VARCHAR(255) NOT NULL,
+    status ENUM('PENDING', 'APPROVED', 'REJECTED') DEFAULT 'PENDING',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+    );
+
+INSERT IGNORE INTO roles (id, name)
+VALUES
+    (UUID_TO_BIN(UUID()), 'USER'),
+    (UUID_TO_BIN(UUID()), 'ADMIN'),
+    (UUID_TO_BIN(UUID()), 'GUEST'),
+    (UUID_TO_BIN(UUID()), 'MIDDLE_MAN');

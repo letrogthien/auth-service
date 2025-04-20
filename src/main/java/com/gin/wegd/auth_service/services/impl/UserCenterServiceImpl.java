@@ -9,18 +9,19 @@ import com.gin.wegd.auth_service.exception.CustomException;
 import com.gin.wegd.auth_service.exception.ErrorCode;
 import com.gin.wegd.auth_service.kafka.producer.ProducerService;
 import com.gin.wegd.auth_service.mapper.UserMapper;
-import com.gin.wegd.auth_service.models.DeleteKycRequest;
-import com.gin.wegd.auth_service.models.OtpModel;
-import com.gin.wegd.auth_service.models.User;
-import com.gin.wegd.auth_service.models.UserIdDocument;
-import com.gin.wegd.auth_service.models.requests.ChangePasswordRq;
-import com.gin.wegd.auth_service.models.requests.ChangePhoneNumberRq;
-import com.gin.wegd.auth_service.models.requests.ForgetPasswordRq;
-import com.gin.wegd.auth_service.models.requests.UpdateUserRq;
+import com.gin.wegd.auth_service.models.*;
+import com.gin.wegd.auth_service.models.requests.*;
 import com.gin.wegd.auth_service.models.responses.ApiResponse;
+import com.gin.wegd.auth_service.models.user_attribute.Address;
+import com.gin.wegd.auth_service.models.user_attribute.InstanceMessageClass;
 import com.gin.wegd.auth_service.models.user_attribute.UserPhone;
 import com.gin.wegd.auth_service.models.user_attribute.UserStatus;
+import com.gin.wegd.auth_service.repositories.InstanceMessageRepository;
+import com.gin.wegd.auth_service.repositories.RoleRepository;
+import com.gin.wegd.auth_service.repositories.UserAddressRepository;
+import com.gin.wegd.auth_service.repositories.UserPhoneRepository;
 import com.gin.wegd.auth_service.services.*;
+import com.gin.wegd.common.events.BaseNotifyEmail;
 import com.gin.wegd.common.events.ForgotPasswordEvModel;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -29,6 +30,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+
 import java.util.UUID;
 
 
@@ -44,6 +46,10 @@ public class UserCenterServiceImpl implements UserCenterService {
     private final UserIdDocumentService userIdDocumentService;
     private final UtilsService utilsService;
     private final DeleteKycService deleteKycService;
+    private final UserAddressRepository userAddressRepository;
+    private final UserPhoneRepository userPhoneRepository;
+    private final InstanceMessageRepository instanceMessageRepository;
+    private final RoleRepository roleRepository;
 
 
     @Override
@@ -52,14 +58,8 @@ public class UserCenterServiceImpl implements UserCenterService {
         String pass = passwordGenerator.generatePassword(12);
         u.setPassword(passwordEncoder.passwordEncoder().encode(pass));
         userService.saveUser(u);
-        producerService.forgotPasswordEv(ForgotPasswordEvModel.newBuilder()
-                .setEmail(u.getEmail())
-                .setNewPassword(pass)
-                .setUserName(u.getUserName())
-                .build());
-        return ApiResponse.<String>builder()
-                .message("Send new password success")
-                .build();
+        producerService.forgotPasswordEv(ForgotPasswordEvModel.newBuilder().setEmail(u.getEmail()).setNewPassword(pass).setUserName(u.getUserName()).build());
+        return ApiResponse.<String>builder().message("Send new password success").build();
     }
 
     @Override
@@ -77,9 +77,7 @@ public class UserCenterServiceImpl implements UserCenterService {
 
         u.setPassword(passwordEncoder.passwordEncoder().encode(changePasswordRq.getNewPassword()));
         userService.saveUser(u);
-        return ApiResponse.<String>builder()
-                .message("change password success")
-                .build();
+        return ApiResponse.<String>builder().message("change password success").build();
     }
 
 
@@ -95,9 +93,13 @@ public class UserCenterServiceImpl implements UserCenterService {
         u.setStatus(UserStatus.INACTIVE);
         userService.saveUser(u);
         otpService.deleteOtp(otpModel);
-        return ApiResponse.<String>builder()
-                .message("delete success")
-                .build();
+        producerService.baseNotifyEv(
+                BaseNotifyEmail.newBuilder()
+                        .setEmail(u.getEmail())
+                        .setData("Your account has been deleted")
+                        .build()
+        );
+        return ApiResponse.<String>builder().message("delete success").build();
     }
 
 
@@ -105,17 +107,17 @@ public class UserCenterServiceImpl implements UserCenterService {
     @Transactional
     public ApiResponse<String> verifyPhoneNumber(String otp) {
         UUID userId = this.extractUserIdInContext();
-        User u = userService.getUserById(userId);
-        if (u.getPhone().isActive()) {
+        UserPhone u = userPhoneRepository.findByUserId(userId).orElseThrow(
+                () -> new CustomException(ErrorCode.NOT_FOUND)
+        );
+        if (u.isActive()) {
             throw new CustomException(ErrorCode.BLOCK_REQUEST);
         }
         OtpModel otpModel = otpService.getOtpValid(userId, otp, OtpPurpose.VERIFY_PHONE_NUMBER);
         otpService.deleteOtp(otpModel);
-        u.getPhone().setActive(true);
-        userService.saveUser(u);
-        return ApiResponse.<String>builder()
-                .message("phone number verified")
-                .build();
+        u.setActive(true);
+        userPhoneRepository.save(u);
+        return ApiResponse.<String>builder().message("phone number verified").build();
     }
 
 
@@ -123,22 +125,21 @@ public class UserCenterServiceImpl implements UserCenterService {
     @Transactional
     public ApiResponse<String> changePhoneNumber(ChangePhoneNumberRq changePhoneNumberRq) {
         UUID userId = this.extractUserIdInContext();
-        User u = userService.getUserById(userId);
-
-        UserPhone userPhone = u.getPhone();
-        if (userPhone.isActive() && changePhoneNumberRq.getOtp() != null) {
-            OtpModel otpModel = otpService.getOtpValid(userId,
+        UserPhone u = userPhoneRepository.findByUserId(userId).orElseThrow(
+                () -> new CustomException(ErrorCode.NOT_FOUND)
+        );
+        if (u.isActive() && changePhoneNumberRq.getOtp() != null) {
+            OtpModel otpModel = otpService.getOtpValid(
+                    userId,
                     changePhoneNumberRq.getOtp(),
-                    OtpPurpose.CHANGE_PHONE_NUMBER);
+                    OtpPurpose.CHANGE_PHONE_NUMBER
+            );
             otpService.deleteOtp(otpModel);
         }
-        userPhone.setPhone(changePhoneNumberRq.getPhoneNumber());
-        userPhone.setActive(true);
-        u.setPhone(userPhone);
-        userService.saveUser(u);
-        return ApiResponse.<String>builder()
-                .message("change phone number success")
-                .build();
+        u.setPhone(changePhoneNumberRq.getPhoneNumber());
+        u.setActive(true);
+        userPhoneRepository.save(u);
+        return ApiResponse.<String>builder().message("change phone number success").build();
     }
 
     @Override
@@ -147,9 +148,7 @@ public class UserCenterServiceImpl implements UserCenterService {
         User u = userService.getUserById(userId);
         u = userMapper.updateUserRqToUser(updateUserRq, u);
         userService.saveUser(u);
-        return ApiResponse.<String>builder()
-                .message("update profile success")
-                .build();
+        return ApiResponse.<String>builder().message("update profile success").build();
     }
 
     @Override
@@ -158,9 +157,7 @@ public class UserCenterServiceImpl implements UserCenterService {
         User u = userService.getUserById(userId);
         u.setTwoFactorAuthEnabled(true);
         userService.saveUser(u);
-        return ApiResponse.<String>builder()
-                .message("enable 2fa success")
-                .build();
+        return ApiResponse.<String>builder().message("enable 2fa success").build();
     }
 
     @Override
@@ -170,31 +167,30 @@ public class UserCenterServiceImpl implements UserCenterService {
         u.setTwoFactorAuthEnabled(false);
         otpService.getOtpValid(userId, otp, OtpPurpose.TWO_FACTOR_AUTHENTICATION);
         userService.saveUser(u);
-        return ApiResponse.<String>builder()
-                .message("disable 2fa success")
-                .build();
+        return ApiResponse.<String>builder().message("disable 2fa success").build();
     }
 
     @Override
     public ApiResponse<String> registerMiddleMan() {
         User u = userService.getUserById(this.extractUserIdInContext());
-        if (u.getRole().contains(Role.MIDDLE_MAN)) {
+        if (u.getRole().stream().anyMatch(r->r.getName().equals(Role.MIDDLE_MAN))) {
             throw new CustomException(ErrorCode.BLOCK_REQUEST);
         }
         UserIdDocument userIdDocument = userIdDocumentService.getDocuments(u.getId());
         if (userIdDocument.getStatus() != UserIdDocStatus.VERIFIED) {
             throw new CustomException(ErrorCode.BLOCK_REQUEST);
         }
-        u.getRole().add(Role.MIDDLE_MAN); //wait for admin to approve
+        Roles role= roleRepository.findByName(Role.MIDDLE_MAN).orElseThrow(
+                () -> new CustomException(ErrorCode.NOT_FOUND)
+        );
+        u.getRole().add(role);
         userService.saveUser(u);
-        return ApiResponse.<String>builder()
-                .message("register middle")
-                .build();
+        return ApiResponse.<String>builder().message("register middle").build();
     }
 
     @Override
     @Transactional
-    public ApiResponse<String> addKyc(MultipartFile frontId, MultipartFile backId){
+    public ApiResponse<String> addKyc(MultipartFile frontId, MultipartFile backId) {
         UUID userId = this.extractUserIdInContext();
         User u = userService.getUserById(userId);
         if (u.getUserIdDocument() != null) {
@@ -208,9 +204,7 @@ public class UserCenterServiceImpl implements UserCenterService {
         userIdDocument.setBackId(back);
         userIdDocument.setStatus(UserIdDocStatus.PENDING);
         userIdDocumentService.createDocument(u, front, back);
-        return ApiResponse.<String>builder()
-                .message("add kyc success, wait for admin to approve")
-                .build();
+        return ApiResponse.<String>builder().message("add kyc success, wait for admin to approve").build();
 
     }
 
@@ -227,14 +221,35 @@ public class UserCenterServiceImpl implements UserCenterService {
         OtpModel otpModel = otpService.getOtpValid(userId, otp, OtpPurpose.DELETE_KYC);
         otpService.deleteOtp(otpModel);
         String verifyImgPath = utilsService.saveKycFile(verifyImg);
-        DeleteKycRequest deleteKycRequest = DeleteKycRequest.builder()
-                .verifyImgPath(verifyImgPath)
-                .userId(userId).build();
+        DeleteKycRequest deleteKycRequest = DeleteKycRequest.builder().verifyImgPath(verifyImgPath).userId(userId).build();
         deleteKycService.saveObj(deleteKycRequest);
-        userIdDocumentService.deleteDocument(u.getUserIdDocument().getId());
-        return ApiResponse.<String>builder()
-                .message("delete kyc success")
-                .build();
+        return ApiResponse.<String>builder().message("delete kyc success").build();
+    }
+
+    @Override
+    public ApiResponse<String> updateAddress(UpdateAddressRq addressRq) {
+        UUID userId = this.extractUserIdInContext();
+        Address address = userAddressRepository.findByUserId(userId).orElseThrow(
+                () -> new CustomException(ErrorCode.NOT_FOUND)
+        );
+        address.setCity(addressRq.getCity());
+        address.setCountry(addressRq.getCountry());
+        address.setAddress1(addressRq.getAddress1());
+        address.setAddress2(addressRq.getAddress2());
+        userAddressRepository.save(address);
+        return ApiResponse.<String>builder().message("Address updated successfully").build();
+    }
+
+    @Override
+    public ApiResponse<String> updateInstanceMessage(ChangeInstanceMessageRq instanceMessageRq) {
+        UUID userId = this.extractUserIdInContext();
+        InstanceMessageClass instanceMessageClass = instanceMessageRepository.findByUserId(userId).orElseThrow(
+                () -> new CustomException(ErrorCode.NOT_FOUND)
+        );
+        instanceMessageClass.setInstanceMessage(instanceMessageRq.getInstanceMessage());
+        instanceMessageClass.setData(instanceMessageRq.getData());
+        instanceMessageRepository.save(instanceMessageClass);
+        return ApiResponse.<String>builder().message("Instance message updated successfully").build();
     }
 
 

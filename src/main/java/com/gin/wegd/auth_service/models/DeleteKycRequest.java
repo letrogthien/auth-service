@@ -20,7 +20,7 @@ import java.util.UUID;
 public class DeleteKycRequest {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private UUID id;
 
     @Column(name = "user_id", nullable = false)
     private UUID userId;

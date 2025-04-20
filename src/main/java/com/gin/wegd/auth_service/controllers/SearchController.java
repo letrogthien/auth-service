@@ -2,15 +2,11 @@ package com.gin.wegd.auth_service.controllers;
 
 
 import com.gin.wegd.auth_service.models.responses.ApiResponse;
-import com.gin.wegd.auth_service.redis.UserCacheService;
 import com.gin.wegd.auth_service.services.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+
 
 
 @RequiredArgsConstructor

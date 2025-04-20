@@ -1,6 +1,5 @@
 package com.gin.wegd.auth_service.jwts;
 
-import com.gin.wegd.auth_service.comon.Role;
 import com.gin.wegd.auth_service.comon.TokenType;
 import com.gin.wegd.auth_service.exception.CustomException;
 import com.gin.wegd.auth_service.exception.ErrorCode;
@@ -49,20 +48,23 @@ public class JwtUtils {
         return buildToken(new HashMap<>(), user, jwtExpiration, TokenType.TMP_TOKEN);
     }
 
+
     private String buildToken(Map<String, Object> extraClaims, User user, long expiration, TokenType tokenType) {
         try {
             List<String> authorities = user.getRole().stream()
-                    .map(Role::name)
+                    .map(a -> a.getName().toString())
                     .toList();
             extraClaims.put("sub", user.getEmail());
-            extraClaims.put("kyc", user.getUserIdDocument().getStatus());
             extraClaims.put("roles", authorities);
             extraClaims.put("id", user.getId());
             extraClaims.put("jti", UUID.randomUUID().toString());
             extraClaims.put("email", user.getEmail());
             extraClaims.put("phone", user.getPhone());
+            extraClaims.put("status", user.getStatus());
             extraClaims.put("type", tokenType.toString());
-
+            if (user.getUserIdDocument()!= null){
+                extraClaims.put("kyc", user.getUserIdDocument().getStatus());
+            }
             Key key = (tokenType == TokenType.TMP_TOKEN) ? get2FaSecretKey() : getSecretKey();
             return Jwts.builder().setClaims(extraClaims)
                     .setExpiration(new Date(System.currentTimeMillis() + expiration))

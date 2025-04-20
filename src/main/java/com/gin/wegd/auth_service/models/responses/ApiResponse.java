@@ -12,7 +12,6 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class  ApiResponse<T> {
-    private int status=200;
     private LocalDateTime timestamp= LocalDateTime.now();
     private String message;
     private T data;

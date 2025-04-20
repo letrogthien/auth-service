@@ -1,6 +1,8 @@
 package com.gin.wegd.auth_service.services.impl;
 
 import com.gin.wegd.auth_service.comon.UserIdDocStatus;
+import com.gin.wegd.auth_service.exception.CustomException;
+import com.gin.wegd.auth_service.exception.ErrorCode;
 import com.gin.wegd.auth_service.models.User;
 import com.gin.wegd.auth_service.models.UserIdDocument;
 import com.gin.wegd.auth_service.repositories.UserIdDocumentRepository;
@@ -8,6 +10,7 @@ import com.gin.wegd.auth_service.services.UserIdDocumentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -38,15 +41,6 @@ public class UserIdDocumentServiceImpl implements UserIdDocumentService {
         userIdDocumentRepository.save(userIdDocument);
     }
 
-    @Override
-    public void updateDocument(UUID documentId, String documentType, String documentNumber, String documentImage) {
-
-    }
-
-    @Override
-    public void deleteDocument(UUID documentId) {
-
-    }
 
     @Override
     public UserIdDocument getDocument(UUID documentId) {
@@ -57,6 +51,13 @@ public class UserIdDocumentServiceImpl implements UserIdDocumentService {
 
     @Override
     public UserIdDocument getDocuments(UUID userId) {
-        return userIdDocumentRepository.findByUserId(userId);
+        return userIdDocumentRepository.findByUserId(userId).orElseThrow(
+                () -> new CustomException(ErrorCode.NOT_FOUND)
+        );
+    }
+
+    @Override
+    public List<UserIdDocument> getAllUserIdDocumentsByStatus(UserIdDocStatus userIdDocStatus) {
+        return userIdDocumentRepository.findAllByStatus(userIdDocStatus);
     }
 }

@@ -6,12 +6,12 @@ import com.gin.wegd.auth_service.models.responses.ApiResponse;
 import com.gin.wegd.auth_service.services.OtpService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-@Controller
+@RestController
 @RequiredArgsConstructor
 @RequestMapping("api/v1/otp")
 public class OtpController {

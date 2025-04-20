@@ -31,7 +31,8 @@ public enum ErrorCode {
     EXECUTOR_SUBMISSION_FAILED(500, "Failed to submit task to executor", HttpStatus.INTERNAL_SERVER_ERROR),
     INVALID_TOKEN_SIGNATURE(401, "INVALID", HttpStatus.UNAUTHORIZED),
     REFRESH_TOKEN_UNAVAILABLE(401, "Refresh token is unavailable", HttpStatus.UNAUTHORIZED),
-    IO_EXCEPTION(500, "IO Exception", HttpStatus.INTERNAL_SERVER_ERROR),;
+    IO_EXCEPTION(500, "IO Exception", HttpStatus.INTERNAL_SERVER_ERROR),
+    NOT_FOUND(HttpStatus.NOT_FOUND.hashCode(), "resource not found", HttpStatus.NOT_FOUND);
 
 
 

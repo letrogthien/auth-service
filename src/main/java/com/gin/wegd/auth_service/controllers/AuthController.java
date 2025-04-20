@@ -2,6 +2,7 @@ package com.gin.wegd.auth_service.controllers;
 
 
 import com.gin.wegd.auth_service.kafka.producer.ProducerService;
+import com.gin.wegd.auth_service.models.StrangeDevice;
 import com.gin.wegd.auth_service.models.requests.*;
 import com.gin.wegd.auth_service.models.responses.ApiResponse;
 import com.gin.wegd.auth_service.models.responses.LoginResponse;
@@ -64,7 +65,12 @@ public class AuthController {
     }
 
 
-
+    @ResponseStatus(HttpStatus.OK)
+    @PostMapping("/trust-device")
+    @PreAuthorize("hasAuthority('USER')")
+    public ApiResponse<String> trustDevice (@RequestBody final StrangeDevice trustDeviceRq) {
+        return authService.trustDevice(trustDeviceRq);
+    }
 
 
 }

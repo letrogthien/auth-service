@@ -4,6 +4,9 @@ package com.gin.wegd.auth_service.models.user_attribute;
 import com.gin.wegd.auth_service.models.User;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.UUID;
+
 @Entity
 @Table(name = "address")
 @Data
@@ -14,7 +17,7 @@ public class Address {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id", length = 36)
-    private String id;
+    private UUID id;
 
     @Column(name = "address1")
     private String address1;

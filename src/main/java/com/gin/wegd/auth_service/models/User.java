@@ -5,8 +5,7 @@ import com.gin.wegd.auth_service.models.user_attribute.*;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDate;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Entity
 @Table(name = "users")
@@ -39,11 +38,13 @@ public class User {
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private InstanceMessageClass instanceMessage;
 
-    @ElementCollection(targetClass = Role.class)
-    @Enumerated(EnumType.STRING)
-    @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
-    @Column(name = "role")
-    private List<Role> role;
+    @ManyToMany
+    @JoinTable(
+            name = "user_roles",
+            joinColumns = @JoinColumn(name = "user_id", columnDefinition = "BINARY(16)"),
+            inverseJoinColumns = @JoinColumn(name = "role_id", columnDefinition = "BINARY(16)")
+    )
+    private List<Roles> role = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
@@ -66,4 +67,8 @@ public class User {
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private UserIdDocument userIdDocument;
+
+    public void removeRole(Role role) {
+        this.role.removeIf(r-> r.getName().equals(role));
+    }
 }

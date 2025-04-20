@@ -16,5 +16,6 @@ public interface OtpService {
     OtpModel generateOtp(User user, OtpPurpose type);
     void deleteOtp(OtpModel otpModel);
     ApiResponse<String> createAndSendOtp(OtpPurpose type);
+    void createAndSendOtp(String email, String userName, UUID id, OtpPurpose type);
 
 }

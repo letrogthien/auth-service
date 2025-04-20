@@ -17,7 +17,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
-import java.time.LocalDateTime;
 import java.util.Random;
 import java.util.UUID;
 
@@ -78,8 +77,21 @@ public class OtpServiceImpl implements OtpService {
         this.sendOtp(otpModel);
         return ApiResponse.<String>builder()
                 .message("otp sent")
-                .data("otp sent")
                 .build();
+    }
+
+    @Override
+    public void createAndSendOtp(String email, String userName, UUID id, OtpPurpose type) {
+        int genOtp = this.random.nextInt(9000)+1000;
+        OtpModel otpModel = OtpModel.builder()
+                .otp(String.valueOf(genOtp))
+                .otpPurpose(type)
+                .userId(id)
+                .userName(userName)
+                .email(email)
+                .build();
+        this.saveOtp(otpModel);
+        this.sendOtp(otpModel);
     }
 
     private UUID extractUserIdInContext() {

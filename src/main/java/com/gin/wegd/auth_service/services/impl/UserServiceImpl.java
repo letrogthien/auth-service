@@ -1,12 +1,16 @@
 package com.gin.wegd.auth_service.services.impl;
 
+import com.gin.wegd.auth_service.comon.Role;
+import com.gin.wegd.auth_service.config.CustomPasswordEncoder;
+import com.gin.wegd.auth_service.mapper.UserMapper;
+import com.gin.wegd.auth_service.models.Roles;
+import com.gin.wegd.auth_service.models.dtos.UserDto;
 import com.gin.wegd.auth_service.models.responses.ApiResponse;
 import com.gin.wegd.auth_service.models.user_attribute.UserStatus;
 import com.gin.wegd.auth_service.exception.CustomException;
 import com.gin.wegd.auth_service.exception.ErrorCode;
-import com.gin.wegd.auth_service.mapper.UserMapper;
 import com.gin.wegd.auth_service.models.User;
-import com.gin.wegd.auth_service.redis.UserCacheService;
+import com.gin.wegd.auth_service.repositories.RoleRepository;
 import com.gin.wegd.auth_service.repositories.UserRepository;
 import com.gin.wegd.auth_service.services.UserService;
 import jakarta.annotation.PostConstruct;
@@ -22,7 +26,10 @@ import java.util.*;
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final RedisTemplate<String, String> redisTemplate;
+    private final UserMapper userMapper;
     private static final String USERNAME_KEY = "usernames";
+    private final CustomPasswordEncoder customPasswordEncoder;
+    private final RoleRepository roleRepository;
 
 
     @Override
@@ -57,9 +64,10 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User getUserByUsername(String username) {
-        return userRepository.findUserByUserName(username).orElseThrow(
+        return  userRepository.findUserByUserName(username).orElseThrow(
                 ()-> new CustomException(ErrorCode.USER_NOT_EXISTED)
         );
+
     }
 
     @Override
@@ -97,9 +105,10 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public ApiResponse<User> getUserDetailsByUsername(String userName) {
-        return ApiResponse.<User>builder()
-                .data(this.getUserByUsername(userName))
+    public ApiResponse<UserDto> getUserDetailsByUsername(String userName) {
+        UserDto userDto = userMapper.userToUserDto(this.getUserByUsername(userName));
+        return ApiResponse.<UserDto>builder()
+                .data(userDto)
                 .build();
     }
 
@@ -138,6 +147,52 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(()-> new CustomException(ErrorCode.USER_NOT_EXISTED));
         u.setStatus(UserStatus.ACTIVE);
         userRepository.save(u);
+    }
+
+    @Override
+    public ApiResponse<List<UserDto>> getAllUser() {
+        List<User> users = userRepository.findAll();
+        List<UserDto> userDtoList = users.stream()
+                .map(userMapper::userToUserDto)
+                .toList();
+        return ApiResponse.<List<UserDto>>builder()
+                .data(userDtoList)
+                .message("Users retrieved successfully")
+                .build();
+    }
+
+    @Override
+    public ApiResponse<List<String>> getAllUserWithRole(Role roleName) {
+        return ApiResponse.<List<String>>builder()
+                .data(userRepository.getAllUserNamesWithRole(roleName))
+                .message("Users retrieved successfully")
+                .build();
+    }
+
+    @Override
+    public ApiResponse<UserDto> getUserDetailsById(UUID userId) {
+        UserDto userDto = userMapper.userToUserDto(this.getUserById(userId));
+        return ApiResponse.<UserDto>builder()
+                .data(userDto)
+                .message("User retrieved successfully")
+                .build();
+    }
+
+    @PostConstruct
+    public void init() {
+        if (!userRepository.existsUserByUserName("admin")) {
+            createAdmin();
+        }
+    }
+
+    private void createAdmin(){
+        List<Roles> roles = roleRepository.findAll();
+        User user = User.builder()
+                .password(customPasswordEncoder.passwordEncoder().encode("123123"))
+                .email("admin@gmail.com")
+                .role(roles)
+                .userName("admin").build();
+        userRepository.save(user);
     }
 
 }

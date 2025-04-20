@@ -6,6 +6,8 @@ import com.gin.wegd.auth_service.comon.TokenStatus;
 import com.gin.wegd.auth_service.comon.TokenType;
 import com.gin.wegd.auth_service.kafka.producer.ProducerService;
 import com.gin.wegd.auth_service.models.OtpModel;
+import com.gin.wegd.auth_service.models.Roles;
+import com.gin.wegd.auth_service.models.StrangeDevice;
 import com.gin.wegd.auth_service.models.user_attribute.UserStatus;
 import com.gin.wegd.auth_service.config.CustomPasswordEncoder;
 import com.gin.wegd.auth_service.exception.CustomException;
@@ -18,12 +20,16 @@ import com.gin.wegd.auth_service.models.responses.ApiResponse;
 import com.gin.wegd.auth_service.models.responses.LoginResponse;
 import com.gin.wegd.auth_service.models.responses.RegisterResponse;
 import com.gin.wegd.auth_service.redis.RedisUtils;
-import com.gin.wegd.auth_service.redis.UserCacheService;
+import com.gin.wegd.auth_service.redis.StrangeDeviceCacheService;
+import com.gin.wegd.auth_service.repositories.RoleRepository;
 import com.gin.wegd.auth_service.services.AuthService;
 import com.gin.wegd.auth_service.services.OtpService;
 import com.gin.wegd.auth_service.services.UserService;
 import com.gin.wegd.common.events.RegisterEvModel;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,6 +45,8 @@ public class AuthServiceImpl implements AuthService {
     private final ProducerService producerService;
     private final RedisUtils redisUtils;
     private final OtpService otpService;
+    private final RoleRepository roleRepository;
+    private final StrangeDeviceCacheService strangeDeviceCacheService;
 
 
     @Override
@@ -47,7 +55,7 @@ public class AuthServiceImpl implements AuthService {
         User user = userService.getUserByUsername(loginRequest.getAccountName());
         validatePassword(loginRequest.getPassword(), user.getPassword());
         validateUserStatus(user.getStatus());
-        if (user.isTwoFactorAuthEnabled()) {
+        if (user.isTwoFactorAuthEnabled()|| isStrangeDevice(user.getId(),loginRequest.getDeviceInfo())) {
             return handleTwoFactorAuth(user);
         }
         return generateTokensAndCache(user);
@@ -65,8 +73,12 @@ public class AuthServiceImpl implements AuthService {
         }
     }
 
+    private boolean isStrangeDevice(UUID id,StrangeDevice device) {
+        return strangeDeviceCacheService.isStrangeDevice(id, device);
+    }
+
     private ApiResponse<LoginResponse> handleTwoFactorAuth(User user) {
-        otpService.generateOtp(user, OtpPurpose.TWO_FACTOR_AUTHENTICATION);
+        otpService.createAndSendOtp(user.getEmail(),user.getUserName(),user.getId(),OtpPurpose.TWO_FACTOR_AUTHENTICATION);
         String tmpToken = jwtUtil.generateTmpToken(user);
         return ApiResponse.<LoginResponse>builder()
                 .data(LoginResponse.builder()
@@ -122,8 +134,9 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private void assignDefaultRole(User user) {
-        List<Role> roles = new LinkedList<>();
-        roles.add(Role.USER);
+        List<Roles> roles = new LinkedList<>();
+        roleRepository.findByName(Role.USER)
+                .ifPresent(roles::add);
         user.setRole(roles);
     }
 
@@ -198,6 +211,16 @@ public class AuthServiceImpl implements AuthService {
         return generateTokensAndCache(user);
     }
 
+    @Override
+    public ApiResponse<String> trustDevice(StrangeDevice strangeDevice) {
+        UUID userId = extractUserIdInContext();
+        strangeDeviceCacheService.addStrangeDevice(userId, strangeDevice);
+        return ApiResponse.<String>builder()
+                .message("Trust device success")
+                .build();
+    }
+
+
     private String generateCacheRefreshKey(Map<String, Object> claims) {
         String userId = Optional.ofNullable(claims.get("id"))
                 .map(Object::toString)
@@ -222,5 +245,18 @@ public class AuthServiceImpl implements AuthService {
                 .message("Login success")
                 .build();
     }
+
+
+    private UUID extractUserIdInContext() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null) {
+            throw new CustomException(ErrorCode.UNAUTHENTICATED);
+        }
+
+        Jwt jwt = (Jwt) authentication.getPrincipal();
+        return UUID.fromString(jwt.getClaim("id"));
+    }
+
 
 }

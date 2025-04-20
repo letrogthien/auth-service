@@ -1,9 +1,6 @@
 package com.gin.wegd.auth_service.controllers;
 
-import com.gin.wegd.auth_service.models.requests.ChangePasswordRq;
-import com.gin.wegd.auth_service.models.requests.ChangePhoneNumberRq;
-import com.gin.wegd.auth_service.models.requests.ForgetPasswordRq;
-import com.gin.wegd.auth_service.models.requests.UpdateUserRq;
+import com.gin.wegd.auth_service.models.requests.*;
 import com.gin.wegd.auth_service.models.responses.ApiResponse;
 import com.gin.wegd.auth_service.services.UserCenterService;
 import lombok.RequiredArgsConstructor;
@@ -93,9 +90,21 @@ public class UserCenterController {
     @PreAuthorize("isAuthenticated()")
     @ResponseStatus(HttpStatus.OK)
     @PostMapping("/delete-kyc")
-    public ApiResponse<String> deleteKyc(@RequestBody final String otp, @RequestBody final MultipartFile verifyImg,
-                                         String id) {
+    public ApiResponse<String> deleteKyc(@RequestBody final String otp, @RequestBody final MultipartFile verifyImg) {
         return userCenterService.deleteKyc(otp, verifyImg);
     }
 
+
+    @PreAuthorize("isAuthenticated()")
+    @ResponseStatus(HttpStatus.OK)
+    @PutMapping("/update-address")
+    public ApiResponse<String> updateAddress(@RequestBody final UpdateAddressRq addressRq) {
+        return userCenterService.updateAddress(addressRq);
+    }
+    @PreAuthorize("isAuthenticated()")
+    @ResponseStatus(HttpStatus.OK)
+    @PutMapping("/update-instance-message")
+    public ApiResponse<String> updateInstanceMessage(@RequestBody final ChangeInstanceMessageRq instanceMessageRq) {
+        return userCenterService.updateInstanceMessage(instanceMessageRq);
+    }
 }

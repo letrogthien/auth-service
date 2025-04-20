@@ -1,6 +1,6 @@
 package com.gin.wegd.auth_service.config;
 
-import com.gin.wegd.auth_service.comon.Role;
+
 import com.gin.wegd.auth_service.comon.TokenType;
 import com.gin.wegd.auth_service.exception.CustomException;
 import com.gin.wegd.auth_service.exception.ErrorCode;
@@ -9,7 +9,6 @@ import com.gin.wegd.auth_service.services.UserService;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.convert.converter.Converter;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -64,7 +63,7 @@ public class CustomAuthenticationConverter implements Converter<Jwt, AbstractAut
         if (user == null || user.getRole() == null || user.getRole().isEmpty()) {
             return roles;
         }
-        roles = user.getRole().stream().map(Role::name)
+        roles = user.getRole().stream().map(a->a.getName().toString())
                 .map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toList());
         return roles;

@@ -4,6 +4,8 @@ import com.gin.wegd.auth_service.models.User;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.UUID;
+
 @Entity
 @Table(name = "instance_message")
 @Data
@@ -12,8 +14,9 @@ import lombok.*;
 @Builder
 public class InstanceMessageClass {
     @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id", length = 36)
-    private String id;
+    private UUID id;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "instance_message")
@@ -22,7 +25,7 @@ public class InstanceMessageClass {
     @Column(name = "data")
     private String data;
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", referencedColumnName = "id")
     private User user;
 }

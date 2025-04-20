@@ -1,6 +1,8 @@
 package com.gin.wegd.auth_service.services;
 
+import com.gin.wegd.auth_service.comon.Role;
 import com.gin.wegd.auth_service.models.User;
+import com.gin.wegd.auth_service.models.dtos.UserDto;
 import com.gin.wegd.auth_service.models.responses.ApiResponse;
 
 
@@ -19,12 +21,15 @@ public interface UserService {
     boolean exitsByUserName(String userName);
     void banUser(UUID userId);
     List<String> getAllUserNames();
-
-
-    ApiResponse<User> getUserDetailsByUsername(String userName);
-    ApiResponse<List<String>>searchUserByPrefix(String keyword);
     void addUsernameToCache(String username);
     void removeUsernameFromCache(String username);
-
     void unbanUser(UUID userId);
+
+
+    ApiResponse<UserDto> getUserDetailsByUsername(String userName);
+    ApiResponse<List<String>>searchUserByPrefix(String keyword);
+    ApiResponse<List<UserDto>> getAllUser();
+    ApiResponse<List<String>> getAllUserWithRole(Role roleName);
+    ApiResponse<UserDto> getUserDetailsById(UUID userId);
+
 }

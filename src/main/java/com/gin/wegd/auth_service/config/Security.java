@@ -23,8 +23,17 @@ public class Security {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity security) throws Exception {
         security.csrf(AbstractHttpConfigurer::disable);
-        security.authorizeHttpRequests(req ->
-                req.anyRequest().permitAll());
+        security.authorizeHttpRequests(req -> req
+                .requestMatchers("/api/v1/auth/login",
+                        "/api/v1/auth/register",
+                        "/api/v1/auth/verify-2fa",
+                        "/api/v1/search/user/name",
+                        "/api/v1/userCenter/forget-password",
+                        "/api/v1/user/**",
+                        "/swagger-ui/**",
+                        "/v3/api-docs/**")
+                .permitAll()
+                .anyRequest().authenticated());
         security.sessionManagement(s ->
                 s.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
         security.oauth2ResourceServer(

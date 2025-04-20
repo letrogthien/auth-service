@@ -1,5 +1,6 @@
 package com.gin.wegd.auth_service.services;
 
+import com.gin.wegd.auth_service.models.StrangeDevice;
 import com.gin.wegd.auth_service.models.requests.*;
 import com.gin.wegd.auth_service.models.responses.ApiResponse;
 import com.gin.wegd.auth_service.models.responses.LoginResponse;
@@ -13,4 +14,5 @@ public interface AuthService {
     ApiResponse<String> logout(String refreshToken);
     ApiResponse<String>logoutAll(String refreshToken);
     ApiResponse<LoginResponse> verify2Fa(Verify2FaRq rq);
+    ApiResponse<String> trustDevice(StrangeDevice strangeDevice);
 }

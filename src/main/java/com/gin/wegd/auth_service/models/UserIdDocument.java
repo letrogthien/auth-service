@@ -22,7 +22,7 @@ public class UserIdDocument {
     @Column(name = "id")
     private UUID id;
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 

@@ -2,6 +2,7 @@ package com.gin.wegd.auth_service.mapper;
 
 
 import com.gin.wegd.auth_service.models.User;
+import com.gin.wegd.auth_service.models.dtos.UserDto;
 import com.gin.wegd.auth_service.models.requests.RegisterRq;
 import com.gin.wegd.auth_service.models.requests.UpdateUserRq;
 import org.mapstruct.*;
@@ -18,4 +19,6 @@ public interface UserMapper {
     @Mapping(target = "id", ignore = true)
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     User updateUserRqToUser(UpdateUserRq updateUserRq,@MappingTarget User user);
+
+    UserDto userToUserDto(User user);
 }
