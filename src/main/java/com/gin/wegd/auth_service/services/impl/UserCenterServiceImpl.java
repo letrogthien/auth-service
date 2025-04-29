@@ -260,11 +260,9 @@ public class UserCenterServiceImpl implements UserCenterService {
 
     private UUID extractUserIdInContext() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
         if (authentication == null) {
             throw new CustomException(ErrorCode.UNAUTHENTICATED);
         }
-
         Jwt jwt = (Jwt) authentication.getPrincipal();
         return UUID.fromString(jwt.getClaim("id"));
     }

@@ -1,5 +1,6 @@
 package com.gin.wegd.auth_service.models;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.gin.wegd.auth_service.comon.Role;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -27,6 +28,7 @@ public class Roles {
     @Column(name = "name", nullable = false, unique = true)
     private Role name;
 
-    @ManyToMany(mappedBy = "role")
+    @JsonBackReference
+    @ManyToMany(mappedBy = "role", fetch = FetchType.LAZY)
     private Set<User> users = new HashSet<>();
 }

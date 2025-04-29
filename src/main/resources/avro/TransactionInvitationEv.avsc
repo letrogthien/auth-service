@@ -1,0 +1,49 @@
+{
+  "type": "record",
+  "name": "TransactionInvitationEv",
+  "namespace": "com.gin.wegd.auth_service.models",
+  "fields": [
+    {
+      "name": "id",
+      "type": {
+        "type": "string",
+        "logicalType": "uuid"
+      }
+    },
+    {
+      "name": "SellerId",
+      "type": {
+        "type": "string",
+        "logicalType": "uuid"
+      }
+    },
+    {
+      "name": "BuyerId",
+      "type": {
+        "type": "string",
+        "logicalType": "uuid"
+      }
+    },
+    {
+      "name": "transaction",
+      "type": {
+        "type": "string",
+        "logicalType": "uuid"
+      }
+    },
+    {
+      "name": "invitationType",
+      "type": {
+        "type": "string",
+        "enum": ["USER", "MIDDLEMAN"]
+      }
+    },
+    {
+      "name": "status",
+      "type": {
+        "type": "string",
+        "enum": ["PENDING", "ACCEPTED", "REJECTED"]
+      }
+    }
+  ]
+}

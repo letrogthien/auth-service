@@ -58,7 +58,6 @@ public class UserCenterController {
     }
 
 
-    @PreAuthorize("isAuthenticated()")
     @ResponseStatus(HttpStatus.OK)
     @PostMapping("/enable-2fa")
     public ApiResponse<String> enable2fa() {

@@ -29,5 +29,12 @@ public class KafkaProducerConfig {
         return new NewTopic(AuthTopic.NOTIFY_EMAIL.getName(), 1, (short) 1);
     }
 
-
+    @Bean
+    NewTopic rejectTransactionInvitationTopic() {
+        return new NewTopic(AuthTopic.REJECT_TRANSACTION_INVITATION.getName(), 1, (short) 1);
+    }
+    @Bean
+    NewTopic acceptTransactionInvitationTopic() {
+        return new NewTopic(AuthTopic.ACCEPT_TRANSACTION_INVITATION.getName(), 1, (short) 1);
+    }
 }

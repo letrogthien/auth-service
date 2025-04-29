@@ -71,6 +71,12 @@ public class AuthController {
     public ApiResponse<String> trustDevice (@RequestBody final StrangeDevice trustDeviceRq) {
         return authService.trustDevice(trustDeviceRq);
     }
+    @ResponseStatus(HttpStatus.OK)
+    @GetMapping("/test")
+    public void test () {
+        authService.test();
+    }
+
 
 
 }

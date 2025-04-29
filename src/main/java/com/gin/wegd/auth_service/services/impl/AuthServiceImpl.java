@@ -214,6 +214,7 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public ApiResponse<String> trustDevice(StrangeDevice strangeDevice) {
         UUID userId = extractUserIdInContext();
+        System.out.println(userId);
         strangeDeviceCacheService.addStrangeDevice(userId, strangeDevice);
         return ApiResponse.<String>builder()
                 .message("Trust device success")
@@ -245,6 +246,10 @@ public class AuthServiceImpl implements AuthService {
                 .message("Login success")
                 .build();
     }
+    public void test() {
+        UUID userId = extractUserIdInContext();
+        System.out.println(userId);
+    }
 
 
     private UUID extractUserIdInContext() {
@@ -253,7 +258,7 @@ public class AuthServiceImpl implements AuthService {
         if (authentication == null) {
             throw new CustomException(ErrorCode.UNAUTHENTICATED);
         }
-
+        System.out.println(authentication.getPrincipal());
         Jwt jwt = (Jwt) authentication.getPrincipal();
         return UUID.fromString(jwt.getClaim("id"));
     }

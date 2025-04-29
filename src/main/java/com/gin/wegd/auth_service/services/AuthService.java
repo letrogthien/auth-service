@@ -15,4 +15,5 @@ public interface AuthService {
     ApiResponse<String>logoutAll(String refreshToken);
     ApiResponse<LoginResponse> verify2Fa(Verify2FaRq rq);
     ApiResponse<String> trustDevice(StrangeDevice strangeDevice);
+    void test();
 }

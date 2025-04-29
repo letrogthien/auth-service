@@ -38,4 +38,14 @@ public class UtilsService {
     public String saveKycFile(MultipartFile file) {
         return saveFile(file);
     }
+
+    public byte[] getImageBytes(String fileName) {
+        try {
+            Path imagePath = Paths.get(UPLOAD_DIR + fileName);
+            return Files.readAllBytes(imagePath);
+        } catch (IOException e) {
+            throw new CustomException(ErrorCode.IO_EXCEPTION);
+        }
+    }
+
 }

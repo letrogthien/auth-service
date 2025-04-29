@@ -2,6 +2,7 @@ package com.gin.wegd.auth_service.exception;
 
 import io.jsonwebtoken.JwtException;
 import jakarta.persistence.PersistenceException;
+import org.apache.kafka.common.errors.SerializationException;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -58,6 +59,12 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(NullPointerException.class)
     public ResponseEntity<ProblemDetail> handlingNullPointerException(NullPointerException e) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+        return new ResponseEntity<>(problemDetail, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(SerializationException.class)
+    public ResponseEntity<ProblemDetail> handlingSerializationException(SerializationException e) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
         return new ResponseEntity<>(problemDetail, HttpStatus.INTERNAL_SERVER_ERROR);
     }

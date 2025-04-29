@@ -2,6 +2,7 @@ package com.gin.wegd.auth_service.redis;
 
 
 import com.gin.wegd.auth_service.models.OtpModel;
+import com.gin.wegd.auth_service.models.StrangeDevice;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -29,6 +30,16 @@ public class RedisConf {
         template.setConnectionFactory(connectionFactory);
         template.setKeySerializer(new StringRedisSerializer());
         template.setValueSerializer(new Jackson2JsonRedisSerializer<>(OtpModel.class));
+        return template;
+    }
+
+    @Bean
+    RedisTemplate<String, StrangeDevice> redisTemplateStrangeDevice(RedisConnectionFactory connectionFactory) {
+
+        RedisTemplate<String, StrangeDevice> template = new RedisTemplate<>();
+        template.setConnectionFactory(connectionFactory);
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setValueSerializer(new Jackson2JsonRedisSerializer<>(StrangeDevice.class));
         return template;
     }
 

@@ -3,6 +3,7 @@ package com.gin.wegd.auth_service.kafka.producer.impl;
 
 import com.gin.wegd.auth_service.kafka.producer.ProducerService;
 import com.gin.wegd.auth_service.kafka.topics.AuthTopic;
+import com.gin.wegd.auth_service.models.TransactionInvitationEv;
 import com.gin.wegd.common.events.BaseNotifyEmail;
 import com.gin.wegd.common.events.ForgotPasswordEvModel;
 import com.gin.wegd.common.events.OtpEvModel;
@@ -37,5 +38,15 @@ public class ProducerServiceImpl implements ProducerService {
     @Override
     public void baseNotifyEv(BaseNotifyEmail ev) {
         kafkaTemplate.send(AuthTopic.NOTIFY_EMAIL.getName(), ev);
+    }
+
+    @Override
+    public void rejectTransactionInvitationEv(TransactionInvitationEv ev) {
+        kafkaTemplate.send(AuthTopic.REJECT_TRANSACTION_INVITATION.getName(), ev);
+    }
+
+    @Override
+    public void acceptTransactionInvitationEv(TransactionInvitationEv ev) {
+        kafkaTemplate.send(AuthTopic.ACCEPT_TRANSACTION_INVITATION.getName(), ev);
     }
 }

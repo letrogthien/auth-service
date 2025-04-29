@@ -13,7 +13,4 @@ import lombok.NoArgsConstructor;
 public class StrangeDevice {
     private String deviceName;
     private String deviceType;
-    private String deviceBrowser;
-    private String deviceIpAddress;
-    private String deviceLocation;
 }

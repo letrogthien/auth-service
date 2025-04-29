@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -21,7 +22,11 @@ public class StrangeDeviceCacheService {
 
     public boolean isStrangeDevice(UUID userId, StrangeDevice strangeDevice) {
         String key = generateKey(userId);
-        return Boolean.TRUE.equals(redisTemplate.opsForSet().isMember(key, strangeDevice));
+        Set<StrangeDevice> strangeDevices = redisTemplate.opsForSet().members(key);
+        if (strangeDevices == null || strangeDevices.isEmpty()){
+            return false;
+        }
+        return !strangeDevices.contains(strangeDevice);
     }
 
 

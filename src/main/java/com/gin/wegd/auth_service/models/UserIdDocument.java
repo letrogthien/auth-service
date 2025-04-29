@@ -1,5 +1,6 @@
 package com.gin.wegd.auth_service.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.gin.wegd.auth_service.comon.UserIdDocStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -22,6 +23,7 @@ public class UserIdDocument {
     @Column(name = "id")
     private UUID id;
 
+    @JsonIgnore
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;

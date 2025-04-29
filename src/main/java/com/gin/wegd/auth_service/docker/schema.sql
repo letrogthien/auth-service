@@ -82,3 +82,17 @@ VALUES
     (UUID_TO_BIN(UUID()), 'ADMIN'),
     (UUID_TO_BIN(UUID()), 'GUEST'),
     (UUID_TO_BIN(UUID()), 'MIDDLE_MAN');
+
+CREATE TABLE IF NOT EXISTS transaction_invitations (
+                                                       id BINARY(16) PRIMARY KEY,
+    sender_id BINARY(16) NOT NULL,
+    receiver_id BINARY(16) NOT NULL,
+    transaction_id BINARY(16),
+    invitation_type ENUM('MIDDLEMAN', 'USER') NOT NULL DEFAULT 'USER',
+    status ENUM('PENDING', 'ACCEPTED', 'REJECTED') DEFAULT 'PENDING',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (transaction_id) REFERENCES transactions(id) ON DELETE SET NULL
+    );
